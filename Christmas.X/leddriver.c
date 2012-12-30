@@ -1,0 +1,25 @@
+#include <p24FJ64GB002.h>
+#include <stdbool.h>
+
+#define ARRAY_SIZE 20
+
+volatile unsigned long lightOutBuf[ARRAY_SIZE];
+volatile unsigned int outReadPtr;
+volatile unsigned int outWritePtr;
+
+bool putOutputData(unsigned long data) {
+    int filled = outWritePtr - outReadPtr;
+    if(filled < 0)
+        filled += ARRAY_SIZE;
+
+    if(filled == ARRAY_SIZE - 1)
+        return false;
+
+    lightOutBuf[outWritePtr] = data;
+    int newPtr = outWritePtr + 1;
+    if(newPtr >= ARRAY_SIZE)
+        newPtr = 0;
+    outWritePtr = newPtr;
+    IEC0bits.T2IE = 1;
+    return true;
+}
