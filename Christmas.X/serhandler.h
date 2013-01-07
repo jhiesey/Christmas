@@ -36,8 +36,11 @@
 
 #define SBYTE_ERROR 0xff
 #define SBYTE_SUCCESS 0x0
+#define SBYTE_TIMERESPONSE 0x01
 
 void handleSerialUpdates();
+
+void checkTimeResponse();
 
 #endif	/* SERHANDLER_H */
 

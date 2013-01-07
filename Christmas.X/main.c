@@ -35,6 +35,7 @@ static int getByte(int delayMs) {
         BYTE b;
         if (poll_getc_cdc(&b))
             return b;
+        checkTimeResponse(); // Checks for a response
     } while (TMR4 < beginTime + delayCycles);
     return -1;
 }

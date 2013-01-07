@@ -7,33 +7,11 @@
 #include "timestep.h"
 #include "buffer.h"
 
-
-/*
-#define SBYTE_CLEAR 0x0 // Clear buffer
-#define SBYTE_ATTIME 0x0 // Begin time message
-#define SMASK_ATTIME 0x0
-#define SBYTE_SINGLE 0x0 // Single, immediate update
-#define SMASK_SINGLE 0x0
-
-#define SMASK_HASDERIV 0x0
-#define SBYTE_HASDERIV 0x0
-#define SMASK_NUMADDRS 0x0
-
-#define SMASK_LIST 0x0
-#define SBYTE_LIST 0x0
-#define SMASK_MASK 0x0
-#define SBYTE_MASK 0x0
-#define SMASK_NOTIFY 0x0
-#define SBYTE_NOTIFY 0x0
-#define SMASK_SETTIME 0x0
-#define SBYTE_SETTIME 0x0
-#define SMASK_END 0x0
-#define SBYTE_END 0x0
-
-#define SBYTE_ERROR 0x0
- */
+#include "dp_usb/usb_stack_globals.h"
 
 static unsigned int nextTime = 0;
+static bool timeResponseReady = false;
+static int timeResponse;
 
 static void setLightFromBuffer(bool hasDeriv, bool forceBright, int addr, unsigned char *buf) {
     if(addr >= NUM_LIGHTS && addr != 64)
@@ -105,9 +83,12 @@ static void setLightMask(int b, unsigned char *masks) {
 }
 
 static void notifyComputer(void) {
-    
-}
+    if(timeResponseReady)
+        return;
 
+    timeResponse = timestep;
+    timeResponseReady = true;
+}
 
 static void timeReady() {
     int b = bufferExtract();
@@ -162,6 +143,18 @@ void handleSerialUpdates() {
         nextTime = 0;
         timeReady();
     }
+}
+
+void checkTimeResponse () {
+    if(!timeResponseReady)
+        return;
+
+    putc_cdc(SBYTE_TIMERESPONSE);
+
+    putc_cdc(timeResponse >> 8);
+    putc_cdc(timeResponse & 0xff);
+
+    timeResponseReady = false;
 }
 
 /*
