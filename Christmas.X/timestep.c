@@ -1,21 +1,29 @@
 
-#include <stdbool.h>
 #include <p24FJ64GB002.h>
+#include "timestep.h"
 #include "leddriver.h"
+#include "serhandler.h"
 
-#define NUM_LIGHTS 50
 #define MAX_BRIGHT 0xcc
+#define MAX_COLOR (0xc * 3);
 
+/*
 struct lightState {
     unsigned char origBright;
     unsigned char brightVal;
     unsigned int colorVal;
     unsigned char readyState;
-};
 
-static volatile struct lightState states[NUM_LIGHTS + 1];
-static volatile unsigned int timestep;
-static volatile bool timingStarted = false;
+    unsigned int grads[4];
+    unsigned int counts[4];
+};
+*/
+
+struct lightState states[NUM_LIGHTS + 1]; // These two are global
+unsigned int timestep;
+
+
+static bool timingStarted = false;
 
 void startTiming(void) {
     timingStarted = true;
@@ -30,21 +38,87 @@ void enumerateLights(void) {
     }
 }
 
-void stepTime(void) {
-    timestep++;
-    if(timestep % 100 == 0) {
-        int sec = timestep / 100;
+bool brightValid(int newBright) {
+    return newBright >= 0 && newBright <= MAX_BRIGHT;
+}
 
-        int i;
-        for(i = 0; i < NUM_LIGHTS; i++) {
-            int c = (i + sec) % 3;
-            states[i].colorVal = 0xf << (4 * c);
-            states[i].readyState = 1;
-        }
-
-        if(sec == 9)
-            timestep = 0;
+bool colorValid(int *colorVals) {
+    int total = 0;
+    int i;
+    for(i = 0; i < 3; i++) {
+        if(colorVals[i] < 0 || colorVals[i] > 0xf)
+            return false;
+        total += colorVals[i];
     }
+    return total <= MAX_COLOR;
+}
+
+static void adjustByGradient(int light, int channel, bool up) {
+    int change = up ? 1 : -1;
+    int newVal;
+    int colorVals[3];
+    switch(channel) {
+        case 0:
+            newVal = states[light].brightVal + change;
+            if(newVal >= 0 && newVal <= MAX_BRIGHT)
+                states[light].brightVal = newVal;
+            break;
+        case 1:
+        case 2:
+        case 3:
+            colorVals[0] = states[light].colorVal & 0xf;
+            colorVals[1] = (states[light].colorVal >> 4) & 0xf;
+            colorVals[2] = (states[light].colorVal >> 8) & 0xf;
+            colorVals[channel - 1] += change;
+            if(colorValid(colorVals)) {
+                states[light].colorVal &= ~(0xf << ((channel - 1) * 4));
+                states[light].colorVal |= colorVals[channel - 1] << ((channel - 1) * 4);
+            }
+            break;
+        default:
+            break;
+    }
+}
+
+static void stepTime(void) {
+//    if(timestep % 100 == 0) {
+//        int sec = timestep / 100;
+//
+//        int i;
+//        for(i = 0; i < NUM_LIGHTS; i++) {
+//            int c = (i + sec) % 3;
+//            states[i].colorVal = 0xf << (4 * c);
+//            states[i].readyState = 1;
+//        }
+//
+//        if(sec == 9)
+//            timestep = 0;
+//    }
+
+    handleSerialUpdates(timestep);
+
+    int i;
+    for(i = 0; i < NUM_LIGHTS; i++) {
+        if(states[i].readyState) { // Only update non-changed lights
+            int j;
+            for(j = 0; j < 4; j++)
+                states[i].counts[j] = 0;
+        } else {
+            int j;
+            for(j = 0; j < 4; j++) {
+                if(states[i].grads[j]) { // If non-zero gradient
+                    if(++states[i].counts[j] >= states[i].grads[j]) {
+                        states[i].counts[j] = 0;
+
+                        adjustByGradient(i, j, states[i].grads[j] > 0);
+                    }
+                }
+            }
+        }
+    }
+
+    if(timestep != 0xffff)
+        timestep++;
 }
 
 // Every timestep (10ms)
