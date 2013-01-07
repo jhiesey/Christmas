@@ -19,10 +19,18 @@ static void setLightFromBuffer(bool hasDeriv, bool forceBright, int addr, unsign
     if(addr == 64)
         addr = NUM_LIGHTS;
 
-    states[addr].brightVal = buf[0];
+    int brightVal = buf[0];
+    int colorVal[3];
+    colorVal[0] = buf[2] & 0xf;
+    colorVal[1] = (buf[2] >> 4) & 0xf;
+    colorVal[2] = buf[1];
+    if(!brightValid(brightVal) && colorValid(colorVal))
+        return;
+
+    states[addr].brightVal = brightVal;
     if(forceBright)
         states[addr].origBright = states[addr].brightVal;
-    states[addr].colorVal = (((unsigned int) buf[1]) << 8) | ((unsigned int) buf[2]);
+    states[addr].colorVal = (colorVal[0]) | (colorVal[1] << 4) | (colorVal[2] << 8);
 
     if(hasDeriv) {
         states[addr].grads[0] = buf[3];
@@ -98,7 +106,7 @@ static void timeReady() {
             int addr = bufferExtract();
             setSingleLight(b, addr);
         } else if((b & SMASK_LIST) == SBYTE_LIST) { // List of lights
-            int numAddrs = bufferExtract();
+            int numAddrs = bufferExtract() & 0x15;
             unsigned char addrList[15];
             int i;
             for(i = 0; i < numAddrs; i++)

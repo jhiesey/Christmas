@@ -69,17 +69,16 @@ static void setup(void) {
     PR4 = 0xFFFF;
     T4CONbits.TON = 1;
 
+    initCDC(); // setup the CDC state machine
+    usb_init(cdc_device_descriptor, cdc_config_descriptor, cdc_str_descs, USB_NUM_STRINGS); // initialize USB. TODO: Remove magic with macro
+    usb_start(); //start the USB peripheral
 
+//    IPC21bits.USB1IP = 4; // Should be default anyway
+    EnableUsbPerifInterrupts(USB_TRN + USB_SOF + USB_UERR + USB_URST);
+    EnableUsbGlobalInterrupt();
 
-//    initCDC(); // setup the CDC state machine
-//    usb_init(cdc_device_descriptor, cdc_config_descriptor, cdc_str_descs, USB_NUM_STRINGS); // initialize USB. TODO: Remove magic with macro
-//    usb_start(); //start the USB peripheral
-//
-//    EnableUsbPerifInterrupts(USB_TRN + USB_SOF + USB_UERR + USB_URST);
-//    EnableUsbGlobalInterrupt();
-//
-//    while (usb_device_state < CONFIGURED_STATE);
-//    usb_register_sof_handler(CDCFlushOnTimeout);
+    while (usb_device_state < CONFIGURED_STATE);
+    usb_register_sof_handler(CDCFlushOnTimeout);
 
     __delay_ms(100);
 
@@ -180,7 +179,7 @@ int main(void) {
             if(success)
                 bufferEnd();
         } else {
-            putc_cdc(SBYTE_ERROR);
+            success = false;
         }
 
         if(success) {

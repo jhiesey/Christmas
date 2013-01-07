@@ -1,6 +1,6 @@
 #include "buffer.h"
 
-#define BUFFER_SIZE 4000
+#define BUFFER_SIZE 3000
 
 static unsigned char buf[BUFFER_SIZE];
 static int readIndex = 0;

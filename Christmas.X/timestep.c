@@ -1,5 +1,6 @@
 
 #include <p24FJ64GB002.h>
+#include <stdlib.h>
 #include "timestep.h"
 #include "leddriver.h"
 #include "serhandler.h"
@@ -53,8 +54,10 @@ bool colorValid(int *colorVals) {
     return total <= MAX_COLOR;
 }
 
-static void adjustByGradient(int light, int channel, bool up) {
-    int change = up ? 1 : -1;
+static void adjustByGradient(int light, int channel, int gradient) {
+    int change = (gradient > 0) ? 1 : -1;
+    if(channel == 0)
+        change *= gradient & 0xf;
     int newVal;
     int colorVals[3];
     switch(channel) {
@@ -107,10 +110,13 @@ static void stepTime(void) {
             int j;
             for(j = 0; j < 4; j++) {
                 if(states[i].grads[j]) { // If non-zero gradient
-                    if(++states[i].counts[j] >= states[i].grads[j]) {
+                    unsigned int interval = abs(states[i].grads[j]);
+                    if(j == 0)
+                        interval >>= 4;
+                    if(++states[i].counts[j] >= interval) {
                         states[i].counts[j] = 0;
 
-                        adjustByGradient(i, j, states[i].grads[j] > 0);
+                        adjustByGradient(i, j, states[i].grads[j]);
                     }
                 }
             }
