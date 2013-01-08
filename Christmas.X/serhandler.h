@@ -35,6 +35,7 @@
 #define SBYTE_ENDRESET 0x80
 
 #define SBYTE_ERROR 0xff
+#define SBYTE_FULL 0x80
 #define SBYTE_SUCCESS 0x0
 #define SBYTE_TIMERESPONSE 0x01
 

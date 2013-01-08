@@ -24,7 +24,7 @@ static void setLightFromBuffer(bool hasDeriv, bool forceBright, int addr, unsign
     colorVal[0] = buf[2] & 0xf;
     colorVal[1] = (buf[2] >> 4) & 0xf;
     colorVal[2] = buf[1];
-    if(!brightValid(brightVal) && colorValid(colorVal))
+    if(!brightValid(brightVal) || !colorValid(colorVal))
         return;
 
     states[addr].brightVal = brightVal;
@@ -98,10 +98,12 @@ static void notifyComputer(void) {
     timeResponseReady = true;
 }
 
-static void timeReady() {
-    int b = bufferExtract();
+int dbg;
 
+static void timeReady() {
     while(true) {
+        int b = bufferExtract();
+        dbg = b;
         if((b & SMASK_SINGLE) == SBYTE_SINGLE) { // Single light
             int addr = bufferExtract();
             setSingleLight(b, addr);

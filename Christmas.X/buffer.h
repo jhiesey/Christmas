@@ -17,6 +17,7 @@ void bufferClearCurrent(void);
 void bufferBegin(void);
 void bufferEnd(void);
 bool bufferInsert(int byte);
+bool bufferGotFull();
 int bufferExtract();
 
 #endif	/* BUFFER_H */

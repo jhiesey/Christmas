@@ -8,6 +8,7 @@ static int readLimitIndex = 0; // One after last valid read position
 
 static int writeIndex = 0;
 static int writeBase = 0; // Beginning of current message
+static bool writeFull = false;
 
 void bufferInit(void) {
     // Nothing needed
@@ -20,6 +21,7 @@ void bufferClearAll(void) {
 
 void bufferClearCurrent(void) {
     writeIndex = writeBase;
+    writeFull = false;
 }
 
 void bufferBegin(void) {
@@ -27,20 +29,32 @@ void bufferBegin(void) {
 }
 
 void bufferEnd(void) {
+    if(writeFull)
+        return;
+    
     readLimitIndex = writeIndex;
 }
 
 bool bufferInsert(int byte) {
+    if(writeFull)
+        return false;
+
     int nextWrite = writeIndex + 1;
     if(nextWrite == BUFFER_SIZE)
         nextWrite = 0;
     
-    if(nextWrite == readIndex)
+    if(nextWrite == readIndex) {
+        writeFull = true;
         return false;
+    }
 
     buf[writeIndex] = byte;
     writeIndex = nextWrite;
     return true;
+}
+
+bool bufferGotFull() {
+    return writeFull;
 }
 
 int bufferExtract() {

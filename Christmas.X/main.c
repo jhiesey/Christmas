@@ -27,7 +27,8 @@ _CONFIG3 (SOSCSEL_IO);
 
 extern BYTE usb_device_state;
 
-static int getByte(int delayMs) {
+static int getByte() {
+    int delayMs = 10000000;
     int delayCycles = delayMs * TICKS_PER_MSEC;
     unsigned int beginTime = TMR4;
 
@@ -36,7 +37,7 @@ static int getByte(int delayMs) {
         if (poll_getc_cdc(&b))
             return b;
         checkTimeResponse(); // Checks for a response
-    } while (TMR4 < beginTime + delayCycles);
+    } while(1); //while (TMR4 < beginTime + delayCycles);
     return -1;
 }
 
@@ -87,106 +88,124 @@ static void setup(void) {
     bufferInit();
 }
 
-static bool handleBytes(int numBytes) {
+static int handleBytes(int numBytes) {
     int b;
     while(numBytes > 0) {
-        if((b = getByte(1000)) < 0 || !bufferInsert(b)) {
-            return false;
-        }
+        if((b = getByte(10000)) < 0)
+            return -1;
+        bufferInsert(b);
         numBytes--;
     }
-    return true;
+    return 0;
 }
 
-static bool handleSingleMessage(int b) {
+static int handleSingleMessage(int b) {
     int numBytes = ((b & SMASK_HASDERIV) == SBYTE_HASDERIV) ? 6 : 3;
-    if(!bufferInsert(b)) {
-        return false;
-    }
 
     return handleBytes(numBytes);
 }
 
-static bool handleAtTime() {
-    if(!handleBytes(2)) // The time itself
-        return false;
+static int handleAtTime() {
+    int status = handleBytes(2); // The time itself
+    if(status)
+        return status;
 
     while(true) {
-        int b = getByte(1000);
-        if(b < 0 || !bufferInsert(b))
-            return false;
+        int status;
+        int b = getByte();
+        if(b < 0)
+            return -1;
+        bufferInsert(b);
 
         if((b & SMASK_SINGLE) == SBYTE_SINGLE) { // Single light
             int b2; // Single address
-            if((b2 = getByte(1000)) < 0 || !bufferInsert(b2)) {
-                return false;
-            }
-            if(!handleSingleMessage(b))
-                return false;
+            if((b2 = getByte()) < 0)
+                return -1;
+            bufferInsert(b2);
+            status = handleSingleMessage(b);
+            if(status)
+                return status;
         } else if((b & SMASK_LIST) == SBYTE_LIST) { // List of lights
             int b2;
-            if((b2 = getByte(1000)) < 0 || !bufferInsert(b2)) {
-                return false;
-            }
+            if((b2 = getByte()) < 0)
+                return -1;
+            bufferInsert(b2);
             int numAddrs = b2 & SMASK_NUMADDRS; // Limited to 15 by mask
-            if(!handleBytes(numAddrs))
-                return false;
-            if(!handleSingleMessage(b))
-                return false;
+            status = handleBytes(numAddrs);
+            if(status)
+                return status;
+            status = handleSingleMessage(b);
+            if(status)
+                return status;
         } else if((b & SMASK_MASK) == SBYTE_MASK) { // Mask of lights
-            if(!handleBytes(7))
-                return false;
-            if(!handleSingleMessage(b))
-                return false;
+            status = handleBytes(7);
+            if(status)
+                return status;
+            status = handleSingleMessage(b);
+            if(status)
+                return status;
         } else if((b & SMASK_NOTIFY) == SBYTE_NOTIFY) { // Notification
+            Nop();
             // Nothing to do
         } else if((b & SMASK_SETTIME) == SBYTE_SETTIME) { // Set time
-            if(!handleBytes(2))
-                return false;
+            status = handleBytes(2);
+            if(status)
+                return status;
         } else if((b & SMASK_END) == SBYTE_END) { // End of message
-            return true;
+            return 0;
         } else {
-            return false;
+            return -1;
         }
     }
 }
+
+bool dbgStop = false;
 
 int main(void) {
     setup();
 
     while(1) {
         int b;
-        bool success = true;
+        int status = 0;
         do { // Wait for the first byte
-            b = getByte(10000);
+            b = getByte();
+            if(dbgStop)
+                Nop();
         } while(b < 0);
 
         if(b == SBYTE_CLEAR) { // Empty buffer
             bufferClearAll();
         } else if((b & SMASK_SINGLE) == SBYTE_SINGLE) { // Single message
             bufferBegin();
-            success = bufferInsert(0) && bufferInsert(0); // Time of 0
-            if(success)
-                success = handleSingleMessage(b);
-            if(success)
-                success = bufferInsert(SBYTE_END);
+            bufferInsert(0); // Time of 0
+            bufferInsert(0);
+            status = handleSingleMessage(b);
+            if(!status)
+                bufferInsert(SBYTE_END);
 
-            if(success)
+            if(!status)
                 bufferEnd();
         } else if((b & SMASK_ATTIME) == SBYTE_ATTIME) { // Timed message
             bufferBegin();
-            success = handleAtTime();
-            if(success)
+            status = handleAtTime();
+            if(bufferGotFull())
+                dbgStop = true;
+            if(!status)
                 bufferEnd();
         } else {
-            success = false;
+            status = -1;
         }
 
-        if(success) {
+        bool gotFull = bufferGotFull();
+        if(status == 0 && !gotFull) {
             putc_cdc(SBYTE_SUCCESS);
         } else {
             bufferClearCurrent();
-            putc_cdc(SBYTE_ERROR);
+            if(gotFull)
+                putc_cdc(SBYTE_FULL);
+            else
+                putc_cdc(SBYTE_ERROR);
+
         }
     }
     
