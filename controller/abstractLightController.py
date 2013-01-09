@@ -31,16 +31,21 @@ class LightColor(object):
 
 		return True
 
-class LightChange(object):
+class ColorChange(object):
 	def __init__(self, addressList, color):
 		self.type = 'change'
 		self.addressList = addressList
 		self.color = color
 
+class GlobalBrightnessChange(object):
+	def __init__(self, bright, forceBright=False):
+		self.type = 'change'
+		self.addressList = [63]
+		self.color = LightColor(bright, 0, 0, 0, forceBright)
+
 class NotificationMessage(object):
 	def __init__(self, notificationTime):
 		self.type = 'notify'
-		self.time = int(notificationTime * 100)
 
 class TimeMessage(object):
 	def __init__(self, currentTime):
@@ -61,51 +66,38 @@ class AbstractLightController(object):
 		exit(1)
 
 	def runUpdate(self):
+		self.interface.drainBytes() # Still technically a race condition here
+		self.interface.sendClear()
+		self.setCurrentTime(0, 0)
 		currTime = 0
 		while True:
 			changeList = self.update(currTime)
-			status = 1
-			while status > 0: # Wait to send update
-				status = self.sendChangesForTime(changeList, currTime)
-				print("Changes sent")
-				print(status)
-				if status > 0:
-					notificationTime = currTime - 0.25
-					if notificationTime < 0:
-						notificationTime = 0
-					while status > 0:
-						time.sleep(0.01) # Wait to append notification
-						print("Sending time notification")
-						print(notificationTime)
-						status = self.setNotificationTime(notificationTime)
-
-					self.interface.waitForTime(notificationTime)
+			status = self.sendChangesForTime(changeList, currTime)
+			if status < 0:
+				print("Failure!")
+				return
 
 			print(("currTime: %d", currTime))
 			currTime += self.interval
 			print(("currTime: %d", currTime))
 			while currTime >= self.period:
-				status = 1
+				prevTime = currTime
 				currTime -= self.period
-				while status > 0:
-					time.sleep(0.01) # Wait to append notification
-					status = self.setCurrentTime(currTime)
+				status = self.setCurrentTime(currTime, prevTime)
+				if status < 0:
+					print("Failure!")
+					return
 
 
 	def sendChangesForTime(self, changeList, currTime):
 		print("Time: %d" % int(currTime * 100))
 		return self.interface.sendAtTime(changeList, int(currTime * 100))
 
-	def setNotificationTime(self, notificationTime):
-		print("Setting notification time to %f", notificationTime)
-		commands = [NotificationMessage(notificationTime)]
-		return self.interface.sendAtTime(commands, 0)
-
-	def setCurrentTime(self, currentTime):
+	def setCurrentTime(self, currentTime, atTime):
 		print("Setting current time to %f", currentTime)
 		commands = [TimeMessage(currentTime)]
 		print(len(commands))
-		return self.interface.sendAtTime(commands, 0)
+		return self.interface.sendAtTime(commands, int(atTime * 100))
 
 
 

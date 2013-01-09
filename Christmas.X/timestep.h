@@ -18,8 +18,8 @@ struct lightState {
     unsigned int colorVal;
     unsigned char readyState;
 
-    unsigned int grads[4];
-    unsigned int counts[4];
+    unsigned char grads[4];
+    unsigned char counts[4];
 };
 
 extern struct lightState states[NUM_LIGHTS + 1];

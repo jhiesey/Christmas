@@ -8,18 +8,6 @@
 #define MAX_BRIGHT 0xcc
 #define MAX_COLOR (0xc * 3);
 
-/*
-struct lightState {
-    unsigned char origBright;
-    unsigned char brightVal;
-    unsigned int colorVal;
-    unsigned char readyState;
-
-    unsigned int grads[4];
-    unsigned int counts[4];
-};
-*/
-
 struct lightState states[NUM_LIGHTS + 1]; // These two are global
 unsigned int timestep;
 
@@ -153,8 +141,13 @@ void __attribute__((__interrupt__,__auto_psv__)) _T1Interrupt(void) {
             val |= ((unsigned long) bright) << 18;
 
             unsigned char addr = pos;
-            if(pos == NUM_LIGHTS)
+            if(pos == NUM_LIGHTS) {
                 addr = 63;
+                int i;
+                for(i = 0; i < NUM_LIGHTS; i++) {
+                    states[i].origBright = bright;
+                }
+            }
             val |= ((unsigned long) addr) << 26;
 
             if(!putOutputData(val)) {

@@ -1,7 +1,7 @@
 import serial
 
 def printHex(data):
-    print(' '.join( [ "%02X" % ord( x ) for x in data ] ),)
+    print(' '.join( [ "%02X" % ord( x ) for x in data ] ))
 
 class InterfaceIO(object):
     def __init__(self, port, timeout):

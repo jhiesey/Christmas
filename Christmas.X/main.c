@@ -27,17 +27,21 @@ _CONFIG3 (SOSCSEL_IO);
 
 extern BYTE usb_device_state;
 
-static int getByte() {
-    int delayMs = 10000000;
-    int delayCycles = delayMs * TICKS_PER_MSEC;
-    unsigned int beginTime = TMR4;
+static unsigned long long getFullTime(void) {
+    unsigned long lsb = TMR4;
+    unsigned long msb = TMR5HLD;
+    return ((unsigned long long) msb) << 16 | lsb;
+}
+
+static int getByte(void) {
+    unsigned long long delayCycles = 2000ULL * TICKS_PER_MSEC;
+    unsigned long long beginTime = getFullTime();
 
     do {
         BYTE b;
         if (poll_getc_cdc(&b))
             return b;
-        checkTimeResponse(); // Checks for a response
-    } while(1); //while (TMR4 < beginTime + delayCycles);
+    } while (getFullTime() < beginTime + delayCycles);
     return -1;
 }
 
@@ -66,8 +70,10 @@ static void setup(void) {
 
     T4CON = 0; // Bit timer
     T4CONbits.TCKPS = 2;
+    T4CONbits.T32 = 1;
     TMR4 = 0;
     PR4 = 0xFFFF;
+    PR5 = 0xFFFF;
     T4CONbits.TON = 1;
 
     initCDC(); // setup the CDC state machine
@@ -91,7 +97,7 @@ static void setup(void) {
 static int handleBytes(int numBytes) {
     int b;
     while(numBytes > 0) {
-        if((b = getByte(10000)) < 0)
+        if((b = getByte()) < 0)
             return -1;
         bufferInsert(b);
         numBytes--;
@@ -144,9 +150,6 @@ static int handleAtTime() {
             status = handleSingleMessage(b);
             if(status)
                 return status;
-        } else if((b & SMASK_NOTIFY) == SBYTE_NOTIFY) { // Notification
-            Nop();
-            // Nothing to do
         } else if((b & SMASK_SETTIME) == SBYTE_SETTIME) { // Set time
             status = handleBytes(2);
             if(status)
@@ -199,13 +202,27 @@ int main(void) {
         bool gotFull = bufferGotFull();
         if(status == 0 && !gotFull) {
             putc_cdc(SBYTE_SUCCESS);
+            CDC_Flush_In_Now();
         } else {
             bufferClearCurrent();
-            if(gotFull)
+            if(gotFull) {
                 putc_cdc(SBYTE_FULL);
-            else
+                while(true) {
+                    int bufferAvail = bufferSpaceFree();
+                    if(bufferAvail >= BUFFER_SIZE / 2) {
+                        putc_cdc(SBYTE_AVAIL);
+                        CDC_Flush_In_Now();
+                        break;
+                    }
+                    unsigned char dummy;
+                    if(peek_getc_cdc(&dummy)) {
+                        break; // If we get a byte, quit waiting
+                    }
+                }
+            } else {
                 putc_cdc(SBYTE_ERROR);
-
+                CDC_Flush_In_Now();
+            }
         }
     }
     

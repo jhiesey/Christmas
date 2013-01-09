@@ -25,8 +25,6 @@
 #define SBYTE_LIST 0x20
 #define SMASK_MASK 0xf0
 #define SBYTE_MASK 0x30
-#define SMASK_NOTIFY 0xf0
-#define SBYTE_NOTIFY 0x80
 #define SMASK_SETTIME 0xf0
 #define SBYTE_SETTIME 0x90
 #define SMASK_END 0xf0
@@ -36,12 +34,10 @@
 
 #define SBYTE_ERROR 0xff
 #define SBYTE_FULL 0x80
+#define SBYTE_AVAIL 0x81
 #define SBYTE_SUCCESS 0x0
-#define SBYTE_TIMERESPONSE 0x01
 
 void handleSerialUpdates();
-
-void checkTimeResponse();
 
 #endif	/* SERHANDLER_H */
 
