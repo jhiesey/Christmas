@@ -35,6 +35,8 @@ static void setLightFromBuffer(bool hasDeriv, bool forceBright, int addr, unsign
         states[addr].grads[1] = buf[4] & 0xf;
         states[addr].grads[2] = (buf[4] >> 4) & 0xf;
         states[addr].grads[3] = buf[5] & 0xf;
+    } else {
+        memset(states[addr].grads, 0, sizeof(states[addr].grads));
     }
     states[addr].readyState = true;
 }
@@ -88,7 +90,7 @@ static void setLightMask(int b, unsigned char *masks) {
     }
 }
 
-static int dbg;
+int dbg;
 
 static void timeReady() {
     while(true) {
@@ -98,7 +100,7 @@ static void timeReady() {
             int addr = bufferExtract();
             setSingleLight(b, addr);
         } else if((b & SMASK_LIST) == SBYTE_LIST) { // List of lights
-            int numAddrs = bufferExtract() & 0x15;
+            int numAddrs = bufferExtract() & 0xf;
             unsigned char addrList[15];
             int i;
             for(i = 0; i < numAddrs; i++)

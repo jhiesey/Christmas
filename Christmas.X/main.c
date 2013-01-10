@@ -216,6 +216,7 @@ int main(void) {
                     }
                     unsigned char dummy;
                     if(peek_getc_cdc(&dummy)) {
+                        Nop();
                         break; // If we get a byte, quit waiting
                     }
                 }

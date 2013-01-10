@@ -26,13 +26,17 @@ class SerialInterface(object):
 		cmdByte = 0x10
 		if setting.forceBright:
 			cmdByte |= 0x4
+		if setting.hasGradient:
+			cmdByte |= 0x8
 		self.connection.sendBytes(struct.pack('!BB', cmdByte, light))
 		self.sendSetting(setting)
 
 	def changeList(self, lights, setting):
 		cmdByte = 0x20
 		if setting.forceBright:
-			cmdBright |= 0x4
+			cmdByte |= 0x4
+		if setting.hasGradient:
+			cmdByte |= 0x8
 		self.connection.sendBytes(struct.pack('!BB', cmdByte, len(lights)))
 		for light in lights:
 			self.connection.sendBytes(struct.pack('!B', light))
@@ -41,7 +45,9 @@ class SerialInterface(object):
 	def changeMask(self, mask, setting):
 		cmdByte = 0x30
 		if setting.forceBright:
-			cmdBright |= 0x4
+			cmdByte |= 0x4
+		if setting.hasGradient:
+			cmdByte |= 0x8
 		self.connection.sendBytes(struct.pack('!B', cmdByte))
 		for i in xrange(7):
 			self.connection.sendBytes(struct.pack('!B', mask[i]))
@@ -50,6 +56,11 @@ class SerialInterface(object):
 	def sendSetting(self, setting):
 		colorVal = (setting.b << 8) | (setting.g << 4) | setting.r
 		self.connection.sendBytes(struct.pack('!BH', setting.bright, colorVal))
+
+		if setting.hasGradient:
+			colorDeriv = ((setting.db << 8) & 0xf) | ((setting.dg << 4) & 0xf) | (setting.dr & 0xf)
+			brightDeriv = ((setting.dbright << 4) & 0xf) | (setting.rbright & 0xf)
+			self.connection.sendBytes(struct.pack('!BH', brightDeriv, colorDeriv))
 
 	def getStatus(self):
 		response = self.connection.receiveBytes(1)
@@ -107,7 +118,7 @@ class SerialInterface(object):
 
 	def sendClear(self):
 		self.connection.sendBytes(struct.pack('!B', 0))
-		return self.getStatus()
+		# return self.getStatus() # Don't bother with status, since we need to drain bytes anyway
 
 	def drainBytes(self):
 		while len(self.connection.receiveBytes(1)) > 0:
