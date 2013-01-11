@@ -79,45 +79,25 @@ static void adjustByGradient(int light, int channel, int gradient, int factor) {
 }
 
 static void stepTime(void) {
-//    if(timestep % 100 == 0) {
-//        int sec = timestep / 100;
-//
-//        int i;
-//        for(i = 0; i < NUM_LIGHTS; i++) {
-//            int c = (i + sec) % 3;
-//            states[i].colorVal = 0xf << (4 * c);
-//            states[i].readyState = 1;
-//        }
-//
-//        if(sec == 9)
-//            timestep = 0;
-//    }
-
     handleSerialUpdates(timestep);
 
     int i;
     for(i = 0; i <= NUM_LIGHTS; i++) {
-//        if(states[i].readyState) { // Only update non-changed lights
-//            int j;
-//            for(j = 0; j < 4; j++)
-//                states[i].counts[j] = 0;
-//        } else {
-            int j;
-            for(j = 0; j < 4; j++) {
-                if(states[i].grads[j]) { // If non-zero gradient
-                    int interval = abs(states[i].grads[j]);
-                    if(++states[i].counts[j] >= interval) {
-                        states[i].counts[j] = 0;
+        int j;
+        for(j = 0; j < 4; j++) {
+            if(states[i].grads[j]) { // If non-zero gradient
+                int interval = abs(states[i].grads[j]);
+                if(++states[i].counts[j] >= interval) {
+                    states[i].counts[j] = 0;
 
-                        int factor = 1;
-                        if(j == 3)
-                            factor = states[i].grads[4];
-                        adjustByGradient(i, j, states[i].grads[j], factor);
-                        states[i].readyState = true;
-                    }
+                    int factor = 1;
+                    if(j == 3)
+                        factor = states[i].grads[4];
+                    adjustByGradient(i, j, states[i].grads[j], factor);
+                    states[i].readyState = true;
                 }
             }
-//        }
+        }
     }
 
     if(timestep != 0xffff)

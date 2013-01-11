@@ -162,8 +162,6 @@ static int handleAtTime() {
     }
 }
 
-bool dbgStop = false;
-
 int main(void) {
     setup();
 
@@ -172,11 +170,9 @@ int main(void) {
         int status = 0;
         do { // Wait for the first byte
             b = getByte();
-            if(dbgStop)
-                Nop();
         } while(b < 0);
 
-        if(b == SBYTE_CLEAR) { // Empty buffer
+        if((b & SMASK_CLEAR) == SBYTE_CLEAR) { // Empty buffer
             bufferClearAll();
         } else if((b & SMASK_SINGLE) == SBYTE_SINGLE) { // Single message
             bufferBegin();
@@ -191,8 +187,6 @@ int main(void) {
         } else if((b & SMASK_ATTIME) == SBYTE_ATTIME) { // Timed message
             bufferBegin();
             status = handleAtTime();
-            if(bufferGotFull())
-                dbgStop = true;
             if(!status)
                 bufferEnd();
         } else {
@@ -216,7 +210,6 @@ int main(void) {
                     }
                     unsigned char dummy;
                     if(peek_getc_cdc(&dummy)) {
-                        Nop();
                         break; // If we get a byte, quit waiting
                     }
                 }

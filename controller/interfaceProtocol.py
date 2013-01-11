@@ -111,12 +111,12 @@ class SerialInterface(object):
 				status = -2
 				break
 
-		print(status)
 		return status
 
-	def sendClear(self):
+	def sendClear(self, waitForStatus=True):
 		self.connection.sendBytes(struct.pack('!B', 0))
-		# return self.getStatus() # Don't bother with status, since we need to drain bytes anyway
+		if waitForStatus: # At first launch, don't bother with status, since we need to drain bytes anyway
+			return self.getStatus()
 
 	def drainBytes(self):
 		while len(self.connection.receiveBytes(1)) > 0:

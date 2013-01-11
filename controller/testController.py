@@ -7,7 +7,7 @@ numPasses = 0
 class TestController(AbstractLightController):
 	def __init__(self, port):
 		# super(TestController, self).__init__(port, 0.1, 25)
-		super(TestController, self).__init__(port, 1, 3, True)
+		super(TestController, self).__init__(port, 0.5, 1, True)
 
 	# def update(self, currTime):
 	# 	commands = []

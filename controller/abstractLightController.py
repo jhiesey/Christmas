@@ -202,19 +202,11 @@ class AbstractLightController(object):
 			for color in self.prevColors:
 				color.bright = self.colors[0].bright
 			ignoreBrightnessGradient = True
-				# if self.autoGradient:
-				# 	color.hasGradient = self.colors[0].hasGradient
-				# 	if color.hasGradient:
-				# 		color.dbright = self.colors[0].dbright
-				# 		color.rbright = self.colors[0].rbright
 
 		newColors = {}
 		for i in xrange(50):
 			newColor = self.colors[i]
 			prevColor = self.prevColors[i]
-			# if self.autoGradient:
-			# 	nextColor = self.nextColors[i]
-			# 	newColor.setGradientTo(nextColor, self.interval)
 
 			if self.autoGradient and ignoreBrightnessGradient:
 				newColor.dbright = 0
@@ -241,10 +233,10 @@ class AbstractLightController(object):
 			color.normalize()
 
 	def runUpdate(self):
-		self.interface.sendClear()
+		self.interface.sendClear(False)
 		self.interface.drainBytes()
 		self.sendChangesForTime([ColorChange(list(xrange(50)), LightColor(0xcc, 0, 0, 0, True))], 0) # Turn everything off
-		time.sleep(1)
+		time.sleep(1) # Make sure everything is set
 		self.setCurrentTime(0, 0)
 		currTime = 0
 		while True:
@@ -269,9 +261,7 @@ class AbstractLightController(object):
 					print("Failure!")
 					return status
 
-			print(("currTime: %d", currTime))
 			currTime += self.interval
-			print(("currTime: %d", currTime))
 			if currTime >= self.period:
 				status = self.setCurrentTime(0, currTime)
 				currTime = 0
@@ -283,23 +273,11 @@ class AbstractLightController(object):
 		currTime += self.interval
 		if currTime >= self.period:
 			currTime = 0
-		print("Next time: %d" % currTime)
 		return currTime
 
 	def sendChangesForTime(self, changeList, currTime):
-		print("Time: %d" % int(currTime * 100))
 		return self.interface.sendAtTime(changeList, int(currTime * 100))
 
 	def setCurrentTime(self, currentTime, atTime):
-		print("Setting current time to %f", currentTime)
 		commands = [TimeMessage(currentTime)]
-		print(len(commands))
 		return self.interface.sendAtTime(commands, int(atTime * 100))
-
-
-
-
-
-
-
-

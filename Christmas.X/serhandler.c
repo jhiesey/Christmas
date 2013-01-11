@@ -106,14 +106,14 @@ static void setLightMask(int b, unsigned char *masks) {
     }
 }
 
-int dbg;
+int dbgLast;
 
 static void timeReady() {
     while(true) {
         int b = bufferExtract();
         if(b < 0) // In case the buffer was cleared
             return;
-        dbg = b;
+        dbgLast = b;
         if((b & SMASK_SINGLE) == SBYTE_SINGLE) { // Single light
             int addr = bufferExtract();
             setSingleLight(b, addr);
