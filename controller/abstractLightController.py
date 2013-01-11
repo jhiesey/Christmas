@@ -174,8 +174,9 @@ class TimeMessage(object):
 		self.time = int(currentTime * 100)
 
 class AbstractLightController(object):
-	def __init__(self, port, interval, period, autoGradient=False):
+	def __init__(self, port, interval, period, autoGradient=False, syncTime=False):
 		self.interface = interfaceProtocol.SerialInterface(port)
+		self.syncTime = syncTime
 		self.interval = interval # Sample interval
 		self.period = period # Repetition period
 		self.autoGradient = autoGradient
@@ -251,6 +252,7 @@ class AbstractLightController(object):
 		time.sleep(1) # Make sure everything is set
 		self.setCurrentTime(0, 0)
 		currTime = 0
+		resetTime = False
 		while True:
 			self.prevColors = copy.deepcopy(self.colors)
 			if self.autoGradient:
@@ -267,19 +269,40 @@ class AbstractLightController(object):
 				self.runColorListUpdate(currTime)
 
 			changeList = self.computeChanges(currTime)
+			if resetTime:
+				resetTime = False
+				if self.syncTime:
+					status = self.interface.sendClear()
+					if status == 0:
+						status = self.setCurrentTime(0, 0)
+				else:
+					status = self.setCurrentTime(0, currTime)
+				if status < 0:
+					print("Failure!")
+					return status
+
 			if len(changeList) > 0:
 				status = self.sendChangesForTime(changeList, currTime)
 				if status < 0:
 					print("Failure!")
 					return status
 
-			currTime += self.interval
-			if currTime >= self.period:
-				status = self.setCurrentTime(0, currTime)
-				currTime = 0
-				if status < 0:
-					print("Failure!")
-					return status
+			newTime = self.getNextTime(currTime)
+			if newTime == 0:
+				resetTime = True
+
+			currTime = newTime
+
+
+			# newTime = currTime + self.interval
+			# if newTime >= self.period:
+			# 	status = self.setCurrentTime(0, currTime if self.syncTime else newTime)
+			# 	currTime = 0
+			# 	if status < 0:
+			# 		print("Failure!")
+			# 		return status
+			# else:
+			# 	currTime = newTime
 
 	def getNextTime(self, currTime):
 		currTime += self.interval

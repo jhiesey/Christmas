@@ -19,7 +19,7 @@ class SerialInterface(object):
 				if light >= 50:
 					continue
 				else:
-					mask[light / 8] |= 1 << (light % 8)
+					mask[light // 8] |= 1 << (light % 8)
 			self.changeMask(mask, setting)
 
 	def changeSingle(self, light, setting):

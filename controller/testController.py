@@ -1,5 +1,6 @@
 #!/opt/local/bin/python2.7
 
+import time
 from abstractLightController import *
 
 class TestController(AbstractLightController):
@@ -22,6 +23,39 @@ class TestController(AbstractLightController):
 				color.b = 0xc
 
 			color.bright = (currTime % 2) * 200
+
+class ClockController(AbstractLightController):
+	def __init__(self, port):
+		super(ClockController, self).__init__(port, 1, 60, False, True)
+	def colorListUpdate(self, currTime):
+
+		if currTime == 0:
+			timeDiff = 1
+			realTime = time.localtime()
+			sleepTime = 60 - realTime.tm_sec
+			if sleepTime < 0:
+				sleepTime += 60
+			if sleepTime >= 60:
+				sleepTime == 0
+			print(sleepTime)
+			time.sleep(sleepTime)
+			self.realTime = time.localtime(time.time() + 30) # Get the middle of the minute
+
+		# Convert to binary
+		print("CurrTime: %f" % currTime)
+		oddTime = currTime % 2 > 0
+		self.writeBinaryAtLight(currTime, 0, 6)
+		self.colors[6].b = 0x3 if oddTime else 0x1
+		self.writeBinaryAtLight(self.realTime.tm_min, 7, 6)
+		self.colors[13].b = 0x3 if oddTime else 0x1
+		self.writeBinaryAtLight(self.realTime.tm_hour, 14, 5)
+
+
+	def writeBinaryAtLight(self, val, startLight, numLights):
+		for i in range(numLights):
+			on = val % 2 == 1
+			val >>= 1
+			self.colors[i + startLight].r = 0xf if on else 0
 
 # class TestController(AbstractLightController):
 # 	def __init__(self, port):
@@ -112,5 +146,5 @@ class TestController(AbstractLightController):
 # 		# 	elif index == 2:
 # 		# 		color.b = 0xc
 
-controller = TestController('/dev/tty.usbmodemfa1411')
+controller = ClockController('/dev/tty.usbmodemfa1411')
 controller.runUpdate()
