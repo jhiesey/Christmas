@@ -112,5 +112,5 @@ class TestController(AbstractLightController):
 # 		# 	elif index == 2:
 # 		# 		color.b = 0xc
 
-controller = TestController('/dev/tty.usbmodemfa141')
+controller = TestController('/dev/tty.usbmodemfa1411')
 controller.runUpdate()

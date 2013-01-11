@@ -196,16 +196,15 @@ int main(void) {
         bool gotFull = bufferGotFull();
         if(status == 0 && !gotFull) {
             putc_cdc(SBYTE_SUCCESS);
-            CDC_Flush_In_Now();
         } else {
             bufferClearCurrent();
             if(gotFull) {
                 putc_cdc(SBYTE_FULL);
+                CDC_Flush_In_Now();
                 while(true) {
                     int bufferAvail = bufferSpaceFree();
                     if(bufferAvail >= BUFFER_SIZE / 2) {
                         putc_cdc(SBYTE_AVAIL);
-                        CDC_Flush_In_Now();
                         break;
                     }
                     unsigned char dummy;
@@ -215,9 +214,9 @@ int main(void) {
                 }
             } else {
                 putc_cdc(SBYTE_ERROR);
-                CDC_Flush_In_Now();
             }
         }
+        CDC_Flush_In_Now();
     }
     
     return 0;
