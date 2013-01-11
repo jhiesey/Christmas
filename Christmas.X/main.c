@@ -45,6 +45,23 @@ static int getByte(void) {
     return -1;
 }
 
+static void enumerateLights(void) {
+    int i;
+    bufferBegin();
+    for(i = 0; i < NUM_LIGHTS; i++) {
+        bufferInsert(0);
+        bufferInsert(0);
+        bufferInsert(0x80 | (i >> 4));
+        bufferInsert((i << 4) | 0xf);
+        bufferInsert(0xf0);
+        bufferInsert(0);
+    }
+    bufferEnd();
+    if(bufferGotFull()) {
+        while(true);
+    }
+}
+
 static void setup(void) {
     AD1PCFG = 0xffff;
     TRISA = 0;
@@ -89,9 +106,9 @@ static void setup(void) {
 
     __delay_ms(100);
 
-    startTiming();
-    enumerateLights();
     bufferInit();
+    enumerateLights();
+    startTiming();
 }
 
 static int handleBytes(int numBytes) {
@@ -105,61 +122,77 @@ static int handleBytes(int numBytes) {
     return 0;
 }
 
-static int handleSingleMessage(int b) {
-    int numBytes = ((b & SMASK_HASDERIV) == SBYTE_HASDERIV) ? 8 : 3;
+//static int handleSingleMessage(int b) {
+//    int numBytes = ((b & SMASK_HASDERIV) == SBYTE_HASDERIV) ? 8 : 3;
+//
+//    return handleBytes(numBytes);
+//}
+//
+//static int handleAtTime() {
+//    int status = handleBytes(2); // The time itself
+//    if(status)
+//        return status;
+//
+//    while(true) {
+//        int status;
+//        int b = getByte();
+//        if(b < 0)
+//            return -1;
+//        bufferInsert(b);
+//
+//        if((b & SMASK_SINGLE) == SBYTE_SINGLE) { // Single light
+//            int b2; // Single address
+//            if((b2 = getByte()) < 0)
+//                return -1;
+//            bufferInsert(b2);
+//            status = handleSingleMessage(b);
+//            if(status)
+//                return status;
+//        } else if((b & SMASK_LIST) == SBYTE_LIST) { // List of lights
+//            int b2;
+//            if((b2 = getByte()) < 0)
+//                return -1;
+//            bufferInsert(b2);
+//            int numAddrs = b2 & SMASK_NUMADDRS; // Limited to 15 by mask
+//            status = handleBytes(numAddrs);
+//            if(status)
+//                return status;
+//            status = handleSingleMessage(b);
+//            if(status)
+//                return status;
+//        } else if((b & SMASK_MASK) == SBYTE_MASK) { // Mask of lights
+//            status = handleBytes(7);
+//            if(status)
+//                return status;
+//            status = handleSingleMessage(b);
+//            if(status)
+//                return status;
+//        } else if((b & SMASK_SETTIME) == SBYTE_SETTIME) { // Set time
+//            status = handleBytes(2);
+//            if(status)
+//                return status;
+//        } else if((b & SMASK_END) == SBYTE_END) { // End of message
+//            return 0;
+//        } else {
+//            return -1;
+//        }
+//    }
+//}
 
-    return handleBytes(numBytes);
-}
-
-static int handleAtTime() {
-    int status = handleBytes(2); // The time itself
+static int handleTimeReset(int b) {
+    int status = handleBytes(2);
     if(status)
         return status;
+    bufferInsert(b);
+    return 0;
+}
 
-    while(true) {
-        int status;
-        int b = getByte();
-        if(b < 0)
-            return -1;
-        bufferInsert(b);
-
-        if((b & SMASK_SINGLE) == SBYTE_SINGLE) { // Single light
-            int b2; // Single address
-            if((b2 = getByte()) < 0)
-                return -1;
-            bufferInsert(b2);
-            status = handleSingleMessage(b);
-            if(status)
-                return status;
-        } else if((b & SMASK_LIST) == SBYTE_LIST) { // List of lights
-            int b2;
-            if((b2 = getByte()) < 0)
-                return -1;
-            bufferInsert(b2);
-            int numAddrs = b2 & SMASK_NUMADDRS; // Limited to 15 by mask
-            status = handleBytes(numAddrs);
-            if(status)
-                return status;
-            status = handleSingleMessage(b);
-            if(status)
-                return status;
-        } else if((b & SMASK_MASK) == SBYTE_MASK) { // Mask of lights
-            status = handleBytes(7);
-            if(status)
-                return status;
-            status = handleSingleMessage(b);
-            if(status)
-                return status;
-        } else if((b & SMASK_SETTIME) == SBYTE_SETTIME) { // Set time
-            status = handleBytes(2);
-            if(status)
-                return status;
-        } else if((b & SMASK_END) == SBYTE_END) { // End of message
-            return 0;
-        } else {
-            return -1;
-        }
-    }
+static int handleTimeMessage(int b) {
+    int status = handleBytes(2);
+    if(status)
+        return status;
+    bufferInsert(b);
+    return handleBytes(3);
 }
 
 int main(void) {
@@ -172,23 +205,20 @@ int main(void) {
             b = getByte();
         } while(b < 0);
 
-        if((b & SMASK_CLEAR) == SBYTE_CLEAR) { // Empty buffer
+        if(b == 0) { // Empty buffer
             bufferClearAll();
-        } else if((b & SMASK_SINGLE) == SBYTE_SINGLE) { // Single message
+        } else if(b == 1) { // Single message
             bufferBegin();
-            bufferInsert(0); // Time of 0
-            bufferInsert(0);
-            status = handleSingleMessage(b);
-            if(!status)
-                bufferInsert(SBYTE_END);
-
-            if(!status)
+            status = handleTimeReset(b);
+            if(status == 0) {
                 bufferEnd();
-        } else if((b & SMASK_ATTIME) == SBYTE_ATTIME) { // Timed message
+            }
+        } else if((b & 0b11111100) == 0b10000000) { // Timed message
             bufferBegin();
-            status = handleAtTime();
-            if(!status)
+            status = handleTimeMessage(b);
+            if(status == 0) {
                 bufferEnd();
+            }
         } else {
             status = -1;
         }
