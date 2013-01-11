@@ -14,6 +14,8 @@ class LightColor(object):
 		self.b = b
 		self.normalize()
 		self.hasGradient = False
+		self.computeColorGradient = True
+		self.computeBrightGradient = True
 
 	def normalize(self):
 		valid = True
@@ -59,28 +61,38 @@ class LightColor(object):
 
 		dt = dt * 100
 
-		brightDiff = next.bright - self.bright
-		rate = float(brightDiff) / dt
-		if rate == 0:
+		if self.computeBrightGradient:
+			brightDiff = next.bright - self.bright
+			rate = float(brightDiff) / dt
+			if rate == 0:
+				self.rbright = 0
+				self.dbright = 0
+			elif abs(rate) > 1:
+				if rate > 15:
+					self.rbright = 15
+				elif rate < -15:
+					self.rbright = -15
+				else:
+					self.rbright = int(rate)
+				self.dbright = 1
+			else:
+				self.rbright = 1
+				self.dbright = self.computeGrad(self.bright, next.bright, dt, 15)
+		else:
 			self.rbright = 0
 			self.dbright = 0
-		elif abs(rate) > 1:
-			if rate > 15:
-				self.rbright = 15
-			elif rate < -15:
-				self.rbright = -15
-			else:
-				self.rbright = int(rate)
-			self.dbright = 1
+
+		if self.computeColorGradient:
+			self.dr = self.computeGrad(self.r, next.r, dt, 127)
+			self.dg = self.computeGrad(self.g, next.g, dt, 127)
+			self.db = self.computeGrad(self.b, next.b, dt, 127)
 		else:
-			self.rbright = 1
-			self.dbright = self.computeGrad(self.bright, next.bright, dt, 15)
+			self.dr = 0
+			self.dg = 0
+			self.db = 0
 
-		self.dr = self.computeGrad(self.r, next.r, dt, 127)
-		self.dg = self.computeGrad(self.g, next.g, dt, 127)
-		self.db = self.computeGrad(self.b, next.b, dt, 127)
-
-		self.hasGradient = True
+		if self.computeBrightGradient or self.computeColorGradient:
+			self.hasGradient = True
 
 	def colorEqual(self, other):
 		"""Compares only color, not gradient"""
@@ -185,7 +197,7 @@ class AbstractLightController(object):
 					return False
 		return True
 
-	def update(self, currTime):
+	def computeChanges(self, currTime):
 		"""Should return a list of updates
 		"""
 		commands = []
@@ -254,7 +266,7 @@ class AbstractLightController(object):
 			else:
 				self.runColorListUpdate(currTime)
 
-			changeList = self.update(currTime)
+			changeList = self.computeChanges(currTime)
 			if len(changeList) > 0:
 				status = self.sendChangesForTime(changeList, currTime)
 				if status < 0:
