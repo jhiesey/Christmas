@@ -58,9 +58,7 @@ class SerialInterface(object):
 		self.connection.sendBytes(struct.pack('!BH', setting.bright, colorVal))
 
 		if setting.hasGradient:
-			colorDeriv = ((setting.db << 8) & 0xf) | ((setting.dg << 4) & 0xf) | (setting.dr & 0xf)
-			brightDeriv = ((setting.dbright << 4) & 0xf) | (setting.rbright & 0xf)
-			self.connection.sendBytes(struct.pack('!BH', brightDeriv, colorDeriv))
+			self.connection.sendBytes(struct.pack('!BBBBB', setting.rbright & 0xff, setting.dbright & 0xff, setting.db & 0xff, setting.dg & 0xff, setting.dr & 0xff))
 
 	def getStatus(self):
 		response = self.connection.receiveBytes(1)

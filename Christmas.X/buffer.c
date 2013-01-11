@@ -13,8 +13,8 @@ void bufferInit(void) {
 }
 
 void bufferClearAll(void) {
-    readIndex = 0;
-    writeIndex = 0;
+    readIndex = readLimitIndex;
+    writeIndex = readLimitIndex;
 }
 
 void bufferClearCurrent(void) {

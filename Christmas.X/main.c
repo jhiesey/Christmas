@@ -106,7 +106,7 @@ static int handleBytes(int numBytes) {
 }
 
 static int handleSingleMessage(int b) {
-    int numBytes = ((b & SMASK_HASDERIV) == SBYTE_HASDERIV) ? 6 : 3;
+    int numBytes = ((b & SMASK_HASDERIV) == SBYTE_HASDERIV) ? 8 : 3;
 
     return handleBytes(numBytes);
 }

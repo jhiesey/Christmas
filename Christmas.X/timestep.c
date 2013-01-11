@@ -9,6 +9,7 @@
 #define MAX_COLOR (0xc * 3);
 
 struct lightState states[NUM_LIGHTS + 1]; // These two are global
+bool masterValid = true;
 unsigned int timestep;
 
 
@@ -20,7 +21,7 @@ void startTiming(void) {
 
 void enumerateLights(void) {
     int i;
-    for(i = 0; i < NUM_LIGHTS; i++) {
+    for(i = 0; i < NUM_LIGHTS + 1; i++) {
         states[i].origBright = MAX_BRIGHT;
         states[i].brightVal = MAX_BRIGHT;
         states[i].readyState = 1;
@@ -39,31 +40,35 @@ bool colorValid(int *colorVals) {
             return false;
         total += colorVals[i];
     }
+
     return total <= MAX_COLOR;
 }
 
-static void adjustByGradient(int light, int channel, int gradient) {
-    int change = (gradient > 0) ? 1 : -1;
-    if(channel == 0)
-        change *= gradient & 0xf;
+static void adjustByGradient(int light, int channel, int gradient, int factor) {
+    int change = (gradient > 0) ? factor : -factor;
     int newVal;
     int colorVals[3];
     switch(channel) {
         case 0:
-            newVal = states[light].brightVal + change;
-            if(newVal >= 0 && newVal <= MAX_BRIGHT)
-                states[light].brightVal = newVal;
-            break;
         case 1:
         case 2:
-        case 3:
             colorVals[0] = states[light].colorVal & 0xf;
             colorVals[1] = (states[light].colorVal >> 4) & 0xf;
             colorVals[2] = (states[light].colorVal >> 8) & 0xf;
-            colorVals[channel - 1] += change;
+            colorVals[channel] += change;
             if(colorValid(colorVals)) {
-                states[light].colorVal &= ~(0xf << ((channel - 1) * 4));
-                states[light].colorVal |= colorVals[channel - 1] << ((channel - 1) * 4);
+                states[light].colorVal &= ~(0xf << (channel * 4));
+                states[light].colorVal |= colorVals[channel] << (channel * 4);
+            }
+            break;
+        case 3:
+            newVal = states[light].brightVal + change;
+            if(newVal < 0) {
+                states[light].brightVal = 0;
+            } else if(newVal > MAX_BRIGHT) {
+                states[light].brightVal = MAX_BRIGHT;
+            } else {
+                states[light].brightVal = newVal;
             }
             break;
         default:
@@ -89,7 +94,7 @@ static void stepTime(void) {
     handleSerialUpdates(timestep);
 
     int i;
-    for(i = 0; i < NUM_LIGHTS; i++) {
+    for(i = 0; i <= NUM_LIGHTS; i++) {
         if(states[i].readyState) { // Only update non-changed lights
             int j;
             for(j = 0; j < 4; j++)
@@ -98,13 +103,15 @@ static void stepTime(void) {
             int j;
             for(j = 0; j < 4; j++) {
                 if(states[i].grads[j]) { // If non-zero gradient
-                    unsigned int interval = abs(states[i].grads[j]);
-                    if(j == 0)
-                        interval >>= 4;
+                    int interval = abs(states[i].grads[j]);
                     if(++states[i].counts[j] >= interval) {
                         states[i].counts[j] = 0;
 
-                        adjustByGradient(i, j, states[i].grads[j]);
+                        int factor = 1;
+                        if(j == 3)
+                            factor = states[i].grads[4];
+                        adjustByGradient(i, j, states[i].grads[j], factor);
+                        states[i].readyState = true;
                     }
                 }
             }
@@ -123,13 +130,40 @@ void __attribute__((__interrupt__,__auto_psv__)) _T1Interrupt(void) {
         stepTime();
     }
 
+    volatile struct lightState *br = states + NUM_LIGHTS;
+    while(br->readyState) {
+        unsigned char bright = br->origBright;
+        if(br->brightVal == br->origBright || !masterValid) {
+            bright = br->brightVal;
+        } else if(br->brightVal > br->origBright) {
+            bright = br->origBright + 1;
+        } else {
+            bright = br->origBright - 1;
+        }
+        unsigned long val = ((unsigned long) bright) << 18;
+        val |= ((unsigned long) 63) << 26;
+
+        if(!putOutputData(val))
+            return;
+
+        masterValid = true;
+        int i;
+        for(i = 0; i < NUM_LIGHTS; i++) {
+            states[i].origBright = bright;
+            states[i].brightVal = bright;
+        }
+        br->origBright = bright;
+        if(br->brightVal == bright) {
+            br->readyState = 0;
+        }
+    }
+
     static int statePos = 0;
     int pos = statePos;
     while(true) {
         volatile struct lightState *curr = states + pos;
         while(curr->readyState) {
-            static unsigned long val;
-            val = ((unsigned long) curr->colorVal) << 6;
+            unsigned long val = ((unsigned long) curr->colorVal) << 6;
             unsigned char bright = curr->origBright;
             if(curr->brightVal == curr->origBright) {
                 bright = curr->brightVal;
@@ -139,21 +173,15 @@ void __attribute__((__interrupt__,__auto_psv__)) _T1Interrupt(void) {
                 bright = curr->origBright - 1;
             }
             val |= ((unsigned long) bright) << 18;
-
-            unsigned char addr = pos;
-            if(pos == NUM_LIGHTS) {
-                addr = 63;
-                int i;
-                for(i = 0; i < NUM_LIGHTS; i++) {
-                    states[i].origBright = bright;
-                }
-            }
-            val |= ((unsigned long) addr) << 26;
+            val |= ((unsigned long) pos) << 26;
 
             if(!putOutputData(val)) {
                 statePos = pos;
                 return;
             }
+            
+            if(bright != states[NUM_LIGHTS].origBright)
+                masterValid = false;
             curr->origBright = bright;
             if(curr->brightVal == bright) {
                 curr->readyState = 0;
@@ -161,7 +189,7 @@ void __attribute__((__interrupt__,__auto_psv__)) _T1Interrupt(void) {
         }
 
         pos = pos + 1;
-        if(pos >= NUM_LIGHTS + 1)
+        if(pos >= NUM_LIGHTS)
             pos = 0;
         if(pos == statePos) {
             statePos = 0;

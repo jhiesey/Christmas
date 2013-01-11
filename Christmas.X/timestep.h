@@ -18,7 +18,7 @@ struct lightState {
     unsigned int colorVal;
     unsigned char readyState;
 
-    unsigned char grads[4];
+    signed char grads[5];
     unsigned char counts[4];
 };
 

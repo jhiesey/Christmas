@@ -31,10 +31,20 @@ static void setLightFromBuffer(bool hasDeriv, bool forceBright, int addr, unsign
     states[addr].colorVal = (colorVal[0]) | (colorVal[1] << 4) | (colorVal[2] << 8);
 
     if(hasDeriv) {
-        states[addr].grads[0] = buf[3];
-        states[addr].grads[1] = buf[4] & 0xf;
-        states[addr].grads[2] = (buf[4] >> 4) & 0xf;
-        states[addr].grads[3] = buf[5] & 0xf;
+        states[addr].grads[0] = buf[7]; // r
+        states[addr].grads[1] = buf[6]; // g
+        states[addr].grads[2] = buf[5]; // b
+        states[addr].grads[3] = buf[4]; // bright delay
+        states[addr].grads[4] = buf[3]; // bright rate
+
+        if(addr == NUM_LIGHTS) { // Only one type of brightness gradient is valid at a time
+            int i;
+            for(i = 0; i < NUM_LIGHTS; i++) {
+                states[i].grads[3] = 0;
+            }
+        } else {
+            states[NUM_LIGHTS].grads[3] = 0;
+        }
     } else {
         memset(states[addr].grads, 0, sizeof(states[addr].grads));
     }
@@ -42,7 +52,7 @@ static void setLightFromBuffer(bool hasDeriv, bool forceBright, int addr, unsign
 }
 
 static void readData(bool hasDeriv, unsigned char *buf) {
-    int remainingBytes = hasDeriv ? 6 : 3;
+    int remainingBytes = hasDeriv ? 8 : 3;
     int i;
     for(i = 0; i < remainingBytes; i++) {
         buf[i] = bufferExtract();
@@ -53,7 +63,7 @@ static void setSingleLight(int b, int addr) {
     bool hasDeriv = (b & SMASK_HASDERIV) == SBYTE_HASDERIV;
     bool forceBright = (b & SMASK_FORCEBRIGHT) == SBYTE_FORCEBRIGHT;
 
-    unsigned char buf[6];
+    unsigned char buf[7];
     readData(hasDeriv, buf);
     setLightFromBuffer(hasDeriv, forceBright, addr, buf);
 }
@@ -95,6 +105,8 @@ int dbg;
 static void timeReady() {
     while(true) {
         int b = bufferExtract();
+        if(b < 0)
+            return;
         dbg = b;
         if((b & SMASK_SINGLE) == SBYTE_SINGLE) { // Single light
             int addr = bufferExtract();

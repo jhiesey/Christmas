@@ -5,7 +5,7 @@ from abstractLightController import *
 class TestController(AbstractLightController):
 	def __init__(self, port):
 		# super(TestController, self).__init__(port, 0.1, 25)
-		super(TestController, self).__init__(port, 1, 3, True)
+		super(TestController, self).__init__(port, 0.5, 1, True)
 
 	# def update(self, currTime):
 	# 	commands = []
@@ -41,15 +41,25 @@ class TestController(AbstractLightController):
 	# 	self.colors[int(currTime * 2)].bright = 0xcc
 
 	def colorListUpdate(self, currTime):
-		self.colors[0].r = 0
-		self.colors[0].g = 0
-		self.colors[0].b = 0
-		if currTime == 0:
-			self.colors[0].r = 0xc
-		elif currTime == 1:
-			self.colors[0].g = 0xc
-		elif currTime == 2:
-			self.colors[0].b = 0xc
+		for color in self.colors:
+			color.r = 0xc
+			color.g = 0xc
+			color.b = 0xc
+			color.bright = (currTime * 400)
+
+		# for i, color in enumerate(self.colors):
+		# 	color.r = 0
+		# 	color.g = 0
+		# 	color.b = 0
+
+		# 	index = (currTime + i) % 3
+
+		# 	if index == 0:
+		# 		color.r = 0xc
+		# 	elif index == 1:
+		# 		color.g = 0xc
+		# 	elif index == 2:
+		# 		color.b = 0xc
 
 controller = TestController('/dev/tty.usbmodemfa141')
 controller.runUpdate()

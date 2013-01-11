@@ -40,14 +40,12 @@ class LightColor(object):
 		res = dt / float(next - curr)
 		if abs(res) <= 1:
 			res = 1 if res > 0 else -1
+		elif abs(res) > limit:
+			res = 0
 		elif res > 0:
-			res = int(res + 1)
-			if res > limit:
-				res = limit
+			res = int(res + 0.9)
 		else:
-			res = int(res - 1)
-			if res < -limit:
-				res = -limit
+			res = int(res - 0.9)
 
 		return res
 
@@ -71,13 +69,14 @@ class LightColor(object):
 				self.rbright = -15
 			else:
 				self.rbright = int(rate)
+			self.dbright = 1
 		else:
 			self.rbright = 1
 			self.dbright = self.computeGrad(self.bright, next.bright, dt, 15)
 
-		self.dr = self.computeGrad(self.r, next.r, dt, 15)
-		self.dg = self.computeGrad(self.g, next.g, dt, 15)
-		self.db = self.computeGrad(self.b, next.b, dt, 15)
+		self.dr = self.computeGrad(self.r, next.r, dt, 127)
+		self.dg = self.computeGrad(self.g, next.g, dt, 127)
+		self.db = self.computeGrad(self.b, next.b, dt, 127)
 
 		self.hasGradient = True
 
@@ -91,6 +90,20 @@ class LightColor(object):
 			return False
 		if self.b != other.b:
 			return False
+		return True
+
+	def brightEqual(self, other):
+		"""Compares only brightness, but INCLUDES gradient"""
+		if self.bright != other.bright:
+			return False
+		if self.hasGradient != other.hasGradient:
+			return False
+		if self.hasGradient:
+			if self.dbright != other.dbright:
+				return False
+			if self.rbright != other.rbright:
+				return False
+
 		return True
 
 	def __ne__(self, other):
@@ -126,10 +139,16 @@ class ColorChange(object):
 		self.color = color
 
 class GlobalBrightnessChange(object):
-	def __init__(self, bright, forceBright=False):
+	def __init__(self, color):
 		self.type = 'change'
 		self.addressList = [63]
-		self.color = LightColor(bright, 0, 0, 0, forceBright)
+		self.color = copy.deepcopy(color)
+		self.color.r = 0
+		self.color.g = 0
+		self.color.b = 0
+		self.color.dr = 0
+		self.color.dg = 0
+		self.color.db = 0
 
 class NotificationMessage(object):
 	def __init__(self, notificationTime):
@@ -154,25 +173,44 @@ class AbstractLightController(object):
 		for i in xrange(1, 50):
 			if colorList[i].bright != colorList[i - 1].bright:
 				return False
+
+			if colorList[i].hasGradient != colorList[i - 1].hasGradient:
+				return False
+			if colorList[i].hasGradient:
+				if colorList[i].dbright != colorList[i - 1].dbright:
+					return False
+				if colorList[i].rbright != colorList[i - 1].rbright:
+					return False
 		return True
 
 	def update(self, currTime):
 		"""Should return a list of updates
 		"""
 		commands = []
-		# First check for brightness optimization
-		if self.isConstantBrightness(self.colors) and ((not self.isConstantBrightness(self.prevColors)) or self.colors[0].bright != self.prevColors[0].bright):
-			commands.append(GlobalBrightnessChange(self.colors[0].bright))
+		if self.autoGradient:
+			for i in xrange(50): # Compute gradients
+				newColor = self.colors[i]
+				nextColor = self.nextColors[i]
+				newColor.setGradientTo(nextColor, self.interval)
+
+		# First check for brightness optimization #, self.prevColorsself.colors[0].bright != self.prevColors[0].bright
+		if self.isConstantBrightness(self.colors) and not (self.isConstantBrightness(self.prevColors) and self.colors[0].brightEqual(self.prevColors[0])):
+			commands.append(GlobalBrightnessChange(self.colors[0]))
 			for color in self.prevColors:
 				color.bright = self.colors[0].bright
+				if self.autoGradient:
+					color.hasGradient = self.colors[0].hasGradient
+					if color.hasGradient:
+						color.dbright = self.colors[0].dbright
+						color.rbright = self.colors[0].rbright
 
 		newColors = {}
 		for i in xrange(50):
 			newColor = self.colors[i]
 			prevColor = self.prevColors[i]
-			if self.autoGradient:
-				nextColor = self.nextColors[i]
-				newColor.setGradientTo(nextColor, self.interval)
+			# if self.autoGradient:
+			# 	nextColor = self.nextColors[i]
+			# 	newColor.setGradientTo(nextColor, self.interval)
 			if newColor != prevColor:
 				if newColor in newColors:
 					newColors[newColor].append(i)
@@ -189,8 +227,9 @@ class AbstractLightController(object):
 	def runUpdate(self):
 		self.interface.sendClear()
 		self.interface.drainBytes()
-		self.setCurrentTime(0, 0)
 		self.sendChangesForTime([ColorChange(list(xrange(50)), LightColor(0xcc, 0, 0, 0, True))], 0) # Turn everything off
+		time.sleep(1)
+		self.setCurrentTime(0, 0)
 		currTime = 0
 		while True:
 			# if self.prevColors is None:
