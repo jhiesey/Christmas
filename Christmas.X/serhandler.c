@@ -37,16 +37,22 @@ static void setLightFromBuffer(bool hasDeriv, bool forceBright, int addr, unsign
         states[addr].grads[3] = buf[4]; // bright delay
         states[addr].grads[4] = buf[3]; // bright rate
 
-        if(addr == NUM_LIGHTS) { // Only one type of brightness gradient is valid at a time
-            int i;
-            for(i = 0; i < NUM_LIGHTS; i++) {
-                states[i].grads[3] = 0;
+        if(buf[4] != 0) {
+            if(addr == NUM_LIGHTS) { // Only one type of brightness gradient is valid at a time
+                int i;
+                for(i = 0; i < NUM_LIGHTS; i++) {
+                    states[i].grads[3] = 0;
+                }
+            } else {
+                states[NUM_LIGHTS].grads[3] = 0;
             }
-        } else {
-            states[NUM_LIGHTS].grads[3] = 0;
         }
     } else {
         memset(states[addr].grads, 0, sizeof(states[addr].grads));
+    }
+    int i;
+    for(i = 0; i < 4; i++) {
+        states[addr].counts[i] = 0;
     }
     states[addr].readyState = true;
 }
@@ -105,7 +111,7 @@ int dbg;
 static void timeReady() {
     while(true) {
         int b = bufferExtract();
-        if(b < 0)
+        if(b < 0) // In case the buffer was cleared
             return;
         dbg = b;
         if((b & SMASK_SINGLE) == SBYTE_SINGLE) { // Single light

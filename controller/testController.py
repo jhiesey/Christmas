@@ -2,10 +2,12 @@
 
 from abstractLightController import *
 
+numPasses = 0
+
 class TestController(AbstractLightController):
 	def __init__(self, port):
 		# super(TestController, self).__init__(port, 0.1, 25)
-		super(TestController, self).__init__(port, 0.5, 1, True)
+		super(TestController, self).__init__(port, 1, 3, True)
 
 	# def update(self, currTime):
 	# 	commands = []
@@ -42,10 +44,29 @@ class TestController(AbstractLightController):
 
 	def colorListUpdate(self, currTime):
 		for color in self.colors:
-			color.r = 0xc
-			color.g = 0xc
-			color.b = 0xc
+			color.r = 0xf
+			color.g = 0xf
+			color.b = 0xf
 			color.bright = (currTime * 400)
+
+		# global numPasses
+
+		# if numPasses > 0 and currTime == 0:
+		# 	while True:
+		# 		pass
+
+		# numPasses += 1
+
+		# self.colors[0].r = 0
+		# self.colors[0].g = 0
+		# self.colors[0].b = 0
+
+		# if currTime == 0:
+		# 	self.colors[0].r = 0xc
+		# elif currTime == 1:
+		# 	self.colors[0].g = 0xc
+		# elif currTime == 2:
+		# 	self.colors[0].b = 0xc
 
 		# for i, color in enumerate(self.colors):
 		# 	color.r = 0

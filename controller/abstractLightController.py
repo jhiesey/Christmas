@@ -16,22 +16,24 @@ class LightColor(object):
 		self.hasGradient = False
 
 	def normalize(self):
+		valid = True
+
 		if self.bright > MAX_BRIGHT:
 			self.bright = MAX_BRIGHT
-			return False
+			valid = False
 		if self.bright < 0:
 			self.bright = 0
-			return False
+			valid = False
 
 		colorSum = self.r + self.g + self.b
 		if(colorSum > MAX_COLOR):
-			ratio = float(colorSum) / MAX_COLOR
+			ratio = MAX_COLOR / float(colorSum)
 			self.r = int(self.r * ratio)
 			self.g = int(self.g * ratio)
 			self.b = int(self.b * ratio)
-			return False
+			valid = False
 
-		return True
+		return valid
 
 	def computeGrad(self, curr, next, dt, limit):
 		if next == curr:
@@ -193,16 +195,18 @@ class AbstractLightController(object):
 				nextColor = self.nextColors[i]
 				newColor.setGradientTo(nextColor, self.interval)
 
-		# First check for brightness optimization #, self.prevColorsself.colors[0].bright != self.prevColors[0].bright
+		# First check for brightness optimization
+		ignoreBrightnessGradient = False
 		if self.isConstantBrightness(self.colors) and not (self.isConstantBrightness(self.prevColors) and self.colors[0].brightEqual(self.prevColors[0])):
 			commands.append(GlobalBrightnessChange(self.colors[0]))
 			for color in self.prevColors:
 				color.bright = self.colors[0].bright
-				if self.autoGradient:
-					color.hasGradient = self.colors[0].hasGradient
-					if color.hasGradient:
-						color.dbright = self.colors[0].dbright
-						color.rbright = self.colors[0].rbright
+			ignoreBrightnessGradient = True
+				# if self.autoGradient:
+				# 	color.hasGradient = self.colors[0].hasGradient
+				# 	if color.hasGradient:
+				# 		color.dbright = self.colors[0].dbright
+				# 		color.rbright = self.colors[0].rbright
 
 		newColors = {}
 		for i in xrange(50):
@@ -211,6 +215,13 @@ class AbstractLightController(object):
 			# if self.autoGradient:
 			# 	nextColor = self.nextColors[i]
 			# 	newColor.setGradientTo(nextColor, self.interval)
+
+			if self.autoGradient and ignoreBrightnessGradient:
+				newColor.dbright = 0
+				newColor.rbright = 0
+				prevColor.dbright = 0
+				prevColor.rbright = 0
+
 			if newColor != prevColor:
 				if newColor in newColors:
 					newColors[newColor].append(i)
@@ -224,6 +235,11 @@ class AbstractLightController(object):
 	def colorListUpdate(self, currTime):
 		pass
 
+	def runColorListUpdate(self, currTime):
+		self.colorListUpdate(currTime)
+		for color in self.colors:
+			color.normalize()
+
 	def runUpdate(self):
 		self.interface.sendClear()
 		self.interface.drainBytes()
@@ -232,21 +248,19 @@ class AbstractLightController(object):
 		self.setCurrentTime(0, 0)
 		currTime = 0
 		while True:
-			# if self.prevColors is None:
-			# 	self.colorListUpdate(currTime)
 			self.prevColors = copy.deepcopy(self.colors)
 			if self.autoGradient:
 				if self.nextColors is None:
-					self.colorListUpdate(currTime)
+					self.runColorListUpdate(currTime)
 					self.nextColors = self.colors
 
 				tempColors = copy.deepcopy(self.nextColors)
 				self.colors = self.nextColors
-				self.colorListUpdate(self.getNextTime(currTime))
+				self.runColorListUpdate(self.getNextTime(currTime))
 				self.nextColors = self.colors
 				self.colors = tempColors
 			else:
-				self.colorListUpdate(currTime)
+				self.runColorListUpdate(currTime)
 
 			changeList = self.update(currTime)
 			if len(changeList) > 0:
@@ -268,7 +282,8 @@ class AbstractLightController(object):
 	def getNextTime(self, currTime):
 		currTime += self.interval
 		if currTime >= self.period:
-			currTime -= self.period
+			currTime = 0
+		print("Next time: %d" % currTime)
 		return currTime
 
 	def sendChangesForTime(self, changeList, currTime):

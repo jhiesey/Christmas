@@ -21,11 +21,13 @@ void startTiming(void) {
 
 void enumerateLights(void) {
     int i;
-    for(i = 0; i < NUM_LIGHTS + 1; i++) {
+    for(i = 0; i < NUM_LIGHTS; i++) {
         states[i].origBright = MAX_BRIGHT;
         states[i].brightVal = MAX_BRIGHT;
         states[i].readyState = 1;
     }
+    states[NUM_LIGHTS].origBright = MAX_BRIGHT;
+    states[NUM_LIGHTS].brightVal = MAX_BRIGHT;
 }
 
 bool brightValid(int newBright) {
@@ -95,11 +97,11 @@ static void stepTime(void) {
 
     int i;
     for(i = 0; i <= NUM_LIGHTS; i++) {
-        if(states[i].readyState) { // Only update non-changed lights
-            int j;
-            for(j = 0; j < 4; j++)
-                states[i].counts[j] = 0;
-        } else {
+//        if(states[i].readyState) { // Only update non-changed lights
+//            int j;
+//            for(j = 0; j < 4; j++)
+//                states[i].counts[j] = 0;
+//        } else {
             int j;
             for(j = 0; j < 4; j++) {
                 if(states[i].grads[j]) { // If non-zero gradient
@@ -115,7 +117,7 @@ static void stepTime(void) {
                     }
                 }
             }
-        }
+//        }
     }
 
     if(timestep != 0xffff)
