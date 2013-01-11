@@ -4,7 +4,7 @@ from abstractLightController import *
 
 class TestController(AbstractLightController):
 	def __init__(self, port):
-		super(TestController, self).__init__(port, 0.5, 3, True)
+		super(TestController, self).__init__(port, 1, 6, True)
 	def colorListUpdate(self, currTime):
 		for (i, color) in enumerate(self.colors):
 			color.computeColorGradient = False
@@ -12,7 +12,7 @@ class TestController(AbstractLightController):
 			color.g = 0
 			color.b = 0
 
-			colorTime = (int(currTime) + i) % 3
+			colorTime = (int(currTime / 2) + i) % 3
 
 			if colorTime == 0:
 				color.r = 0xc
@@ -21,7 +21,7 @@ class TestController(AbstractLightController):
 			elif colorTime == 2:
 				color.b = 0xc
 
-			color.bright = (currTime % 1) * 400
+			color.bright = (currTime % 2) * 200
 
 # class TestController(AbstractLightController):
 # 	def __init__(self, port):

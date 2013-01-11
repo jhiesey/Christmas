@@ -3,9 +3,9 @@
 
 #define ARRAY_SIZE 20
 
-volatile unsigned long lightOutBuf[ARRAY_SIZE];
-volatile unsigned int outReadPtr;
-volatile unsigned int outWritePtr;
+volatile unsigned long lightOutBuf[ARRAY_SIZE] __attribute__ ((near));
+volatile unsigned int outReadPtr __attribute__ ((near));
+volatile unsigned int outWritePtr __attribute__ ((near));
 
 bool putOutputData(unsigned long data) {
     int filled = outWritePtr - outReadPtr;

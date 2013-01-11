@@ -10,7 +10,7 @@
 
 #include <stdbool.h>
 
-#define BUFFER_SIZE 3000
+#define BUFFER_SIZE 5000
 
 // Sender-side
 void bufferInit(void);
