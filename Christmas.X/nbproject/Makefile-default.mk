@@ -45,11 +45,11 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/dp_usb/cdc.o ${OBJECTDIR}/dp_usb/usb_stack.o ${OBJECTDIR}/main.o ${OBJECTDIR}/leddriver.o ${OBJECTDIR}/leddriver_asm.o ${OBJECTDIR}/timestep.o ${OBJECTDIR}/serhandler.o ${OBJECTDIR}/buffer.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/dp_usb/cdc.o.d ${OBJECTDIR}/dp_usb/usb_stack.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/leddriver.o.d ${OBJECTDIR}/leddriver_asm.o.d ${OBJECTDIR}/timestep.o.d ${OBJECTDIR}/serhandler.o.d ${OBJECTDIR}/buffer.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/dp_usb/cdc.o ${OBJECTDIR}/dp_usb/usb_stack.o ${OBJECTDIR}/main.o ${OBJECTDIR}/leddriver.o ${OBJECTDIR}/leddriver_asm.o ${OBJECTDIR}/timestep.o ${OBJECTDIR}/buffer.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/dp_usb/cdc.o.d ${OBJECTDIR}/dp_usb/usb_stack.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/leddriver.o.d ${OBJECTDIR}/leddriver_asm.o.d ${OBJECTDIR}/timestep.o.d ${OBJECTDIR}/buffer.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/dp_usb/cdc.o ${OBJECTDIR}/dp_usb/usb_stack.o ${OBJECTDIR}/main.o ${OBJECTDIR}/leddriver.o ${OBJECTDIR}/leddriver_asm.o ${OBJECTDIR}/timestep.o ${OBJECTDIR}/serhandler.o ${OBJECTDIR}/buffer.o
+OBJECTFILES=${OBJECTDIR}/dp_usb/cdc.o ${OBJECTDIR}/dp_usb/usb_stack.o ${OBJECTDIR}/main.o ${OBJECTDIR}/leddriver.o ${OBJECTDIR}/leddriver_asm.o ${OBJECTDIR}/timestep.o ${OBJECTDIR}/buffer.o
 
 
 CFLAGS=
@@ -103,12 +103,6 @@ ${OBJECTDIR}/timestep.o: timestep.c  nbproject/Makefile-${CND_CONF}.mk
 	${MP_CC} $(MP_EXTRA_CC_PRE)  timestep.c  -o ${OBJECTDIR}/timestep.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/timestep.o.d"        -g -D__DEBUG -D__MPLAB_DEBUGGER_ICD3=1  -omf=elf -mlarge-data -O0 -I"." -msmart-io=1 -Wall -msfr-warn=off
 	@${FIXDEPS} "${OBJECTDIR}/timestep.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
-${OBJECTDIR}/serhandler.o: serhandler.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
-	@${RM} ${OBJECTDIR}/serhandler.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  serhandler.c  -o ${OBJECTDIR}/serhandler.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/serhandler.o.d"        -g -D__DEBUG -D__MPLAB_DEBUGGER_ICD3=1  -omf=elf -mlarge-data -O0 -I"." -msmart-io=1 -Wall -msfr-warn=off
-	@${FIXDEPS} "${OBJECTDIR}/serhandler.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
-	
 ${OBJECTDIR}/buffer.o: buffer.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 
 	@${RM} ${OBJECTDIR}/buffer.o.d 
@@ -145,12 +139,6 @@ ${OBJECTDIR}/timestep.o: timestep.c  nbproject/Makefile-${CND_CONF}.mk
 	@${RM} ${OBJECTDIR}/timestep.o.d 
 	${MP_CC} $(MP_EXTRA_CC_PRE)  timestep.c  -o ${OBJECTDIR}/timestep.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/timestep.o.d"        -g -omf=elf -mlarge-data -O0 -I"." -msmart-io=1 -Wall -msfr-warn=off
 	@${FIXDEPS} "${OBJECTDIR}/timestep.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
-	
-${OBJECTDIR}/serhandler.o: serhandler.c  nbproject/Makefile-${CND_CONF}.mk
-	@${MKDIR} ${OBJECTDIR} 
-	@${RM} ${OBJECTDIR}/serhandler.o.d 
-	${MP_CC} $(MP_EXTRA_CC_PRE)  serhandler.c  -o ${OBJECTDIR}/serhandler.o  -c -mcpu=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/serhandler.o.d"        -g -omf=elf -mlarge-data -O0 -I"." -msmart-io=1 -Wall -msfr-warn=off
-	@${FIXDEPS} "${OBJECTDIR}/serhandler.o.d" $(SILENT)  -rsi ${MP_CC_DIR}../ 
 	
 ${OBJECTDIR}/buffer.o: buffer.c  nbproject/Makefile-${CND_CONF}.mk
 	@${MKDIR} ${OBJECTDIR} 

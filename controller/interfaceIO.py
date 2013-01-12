@@ -9,15 +9,13 @@ class InterfaceIO(object):
     
     def receiveBytes(self, nBytes):
         data = self.ser.read(nBytes)
-        if len(data) > 0:
-            print("In: ")
-            printHex(data)
+        # if len(data) > 0:
+        #     print("In: ")
+        #     printHex(data)
         return data
         
     def sendBytes(self, data):
-        print("Out: ")
-        printHex(data)
+        # print("Out: ")
+        # printHex(data)
         self.ser.write(data)
-        
-        
         

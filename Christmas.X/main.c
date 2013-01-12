@@ -122,63 +122,6 @@ static int handleBytes(int numBytes) {
     return 0;
 }
 
-//static int handleSingleMessage(int b) {
-//    int numBytes = ((b & SMASK_HASDERIV) == SBYTE_HASDERIV) ? 8 : 3;
-//
-//    return handleBytes(numBytes);
-//}
-//
-//static int handleAtTime() {
-//    int status = handleBytes(2); // The time itself
-//    if(status)
-//        return status;
-//
-//    while(true) {
-//        int status;
-//        int b = getByte();
-//        if(b < 0)
-//            return -1;
-//        bufferInsert(b);
-//
-//        if((b & SMASK_SINGLE) == SBYTE_SINGLE) { // Single light
-//            int b2; // Single address
-//            if((b2 = getByte()) < 0)
-//                return -1;
-//            bufferInsert(b2);
-//            status = handleSingleMessage(b);
-//            if(status)
-//                return status;
-//        } else if((b & SMASK_LIST) == SBYTE_LIST) { // List of lights
-//            int b2;
-//            if((b2 = getByte()) < 0)
-//                return -1;
-//            bufferInsert(b2);
-//            int numAddrs = b2 & SMASK_NUMADDRS; // Limited to 15 by mask
-//            status = handleBytes(numAddrs);
-//            if(status)
-//                return status;
-//            status = handleSingleMessage(b);
-//            if(status)
-//                return status;
-//        } else if((b & SMASK_MASK) == SBYTE_MASK) { // Mask of lights
-//            status = handleBytes(7);
-//            if(status)
-//                return status;
-//            status = handleSingleMessage(b);
-//            if(status)
-//                return status;
-//        } else if((b & SMASK_SETTIME) == SBYTE_SETTIME) { // Set time
-//            status = handleBytes(2);
-//            if(status)
-//                return status;
-//        } else if((b & SMASK_END) == SBYTE_END) { // End of message
-//            return 0;
-//        } else {
-//            return -1;
-//        }
-//    }
-//}
-
 static int handleTimeReset(int b) {
     int status = handleBytes(2);
     if(status)
@@ -205,15 +148,15 @@ int main(void) {
             b = getByte();
         } while(b < 0);
 
-        if(b == 0) { // Empty buffer
+        if(b == SBYTE_CLEAR) { // Empty buffer
             bufferClearAll();
-        } else if(b == 1) { // Single message
+        } else if(b == SBYTE_RESETTIME) { // Reset time
             bufferBegin();
             status = handleTimeReset(b);
             if(status == 0) {
                 bufferEnd();
             }
-        } else if((b & 0b11111100) == 0b10000000) { // Timed message
+        } else if((b & SMASK_SINGLE) == SBYTE_SINGLE) { // Timed message
             bufferBegin();
             status = handleTimeMessage(b);
             if(status == 0) {

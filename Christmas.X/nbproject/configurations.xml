@@ -30,7 +30,6 @@
       <itemPath>leddriver.c</itemPath>
       <itemPath>leddriver_asm.s</itemPath>
       <itemPath>timestep.c</itemPath>
-      <itemPath>serhandler.c</itemPath>
       <itemPath>buffer.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"

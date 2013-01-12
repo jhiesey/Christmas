@@ -13,12 +13,15 @@ class LightColor(object):
 		self.g = g
 		self.b = b
 		self.normalize()
-		self.hasGradient = False
 		self.computeColorGradient = True
 		self.computeBrightGradient = True
 
 	def normalize(self):
 		valid = True
+		self.bright = int(self.bright)
+		self.r = int(self.r)
+		self.g = int(self.g)
+		self.b = int(self.b)
 
 		if self.bright > MAX_BRIGHT:
 			self.bright = MAX_BRIGHT
@@ -37,63 +40,6 @@ class LightColor(object):
 
 		return valid
 
-	def computeGrad(self, curr, next, dt, limit):
-		if next == curr:
-			return 0
-
-		res = dt / float(next - curr)
-		if abs(res) <= 1:
-			res = 1 if res > 0 else -1
-		elif abs(res) > limit:
-			res = 0
-		elif res > 0:
-			res = int(res + 0.9)
-		else:
-			res = int(res - 0.9)
-
-		return res
-
-
-	def setGradientTo(self, next, dt):
-		if self.colorEqual(next):
-			self.hasGradient = False
-			return
-
-		dt = dt * 100
-
-		if self.computeBrightGradient:
-			brightDiff = next.bright - self.bright
-			rate = float(brightDiff) / dt
-			if rate == 0:
-				self.rbright = 0
-				self.dbright = 0
-			elif abs(rate) > 1:
-				if rate > 15:
-					self.rbright = 15
-				elif rate < -15:
-					self.rbright = -15
-				else:
-					self.rbright = int(rate)
-				self.dbright = 1
-			else:
-				self.rbright = 1
-				self.dbright = self.computeGrad(self.bright, next.bright, dt, 15)
-		else:
-			self.rbright = 0
-			self.dbright = 0
-
-		if self.computeColorGradient:
-			self.dr = self.computeGrad(self.r, next.r, dt, 127)
-			self.dg = self.computeGrad(self.g, next.g, dt, 127)
-			self.db = self.computeGrad(self.b, next.b, dt, 127)
-		else:
-			self.dr = 0
-			self.dg = 0
-			self.db = 0
-
-		if self.computeBrightGradient or self.computeColorGradient:
-			self.hasGradient = True
-
 	def colorEqual(self, other):
 		"""Compares only color, not gradient"""
 		if self.bright != other.bright:
@@ -106,79 +52,29 @@ class LightColor(object):
 			return False
 		return True
 
-	def brightEqual(self, other):
-		"""Compares only brightness, but INCLUDES gradient"""
-		if self.bright != other.bright:
-			return False
-		if self.hasGradient != other.hasGradient:
-			return False
-		if self.hasGradient:
-			if self.dbright != other.dbright:
-				return False
-			if self.rbright != other.rbright:
-				return False
-
-		return True
-
 	def __ne__(self, other):
 		return not self.__eq__(other)
 
 	def __eq__(self, other):
-		if not self.colorEqual(other):
-			return False
-		if self.hasGradient != other.hasGradient:
-			return False
-		if self.hasGradient:
-			if self.dbright != other.dbright:
-				return False
-			if self.rbright != other.rbright:
-				return False
-			if self.dr != other.dr:
-				return False
-			if self.dg != other.dg:
-				return False
-			if self.db != other.db:
-				return False
-
-		return True
-
-
-	def __hash__(self):
-		return hash(self.bright) ^ hash(self.r) ^ hash(self.g) ^ hash(self.b)
+		return self.colorEqual(other)
 
 class ColorChange(object):
-	def __init__(self, addressList, color):
+	def __init__(self, address, color):
 		self.type = 'change'
-		self.addressList = addressList
+		self.address = address
 		self.color = color
 
-class GlobalBrightnessChange(object):
-	def __init__(self, color):
-		self.type = 'change'
-		self.addressList = [63]
-		self.color = copy.deepcopy(color)
-		self.color.r = 0
-		self.color.g = 0
-		self.color.b = 0
-		self.color.dr = 0
-		self.color.dg = 0
-		self.color.db = 0
-
-class NotificationMessage(object):
-	def __init__(self, notificationTime):
-		self.type = 'notify'
-
 class TimeMessage(object):
-	def __init__(self, currentTime):
-		self.type = 'settime'
-		self.time = int(currentTime * 100)
+	def __init__(self):
+		self.type = 'cleartime'
 
 class AbstractLightController(object):
-	def __init__(self, port, interval, period, autoGradient=False):
+	def __init__(self, port, period, interval, microInterval=0, syncTime=False):
 		self.interface = interfaceProtocol.SerialInterface(port)
-		self.interval = interval # Sample interval
 		self.period = period # Repetition period
-		self.autoGradient = autoGradient
+		self.interval = interval # Sample interval
+		self.microInterval = microInterval # For interpolation
+		self.syncTime = syncTime
 		self.colors = [LightColor(0xcc, 0, 0, 0) for i in xrange(50)]
 		self.prevColors = None
 		self.nextColors = None
@@ -188,98 +84,138 @@ class AbstractLightController(object):
 			if colorList[i].bright != colorList[i - 1].bright:
 				return False
 
-			if colorList[i].hasGradient != colorList[i - 1].hasGradient:
-				return False
-			if colorList[i].hasGradient:
-				if colorList[i].dbright != colorList[i - 1].dbright:
-					return False
-				if colorList[i].rbright != colorList[i - 1].rbright:
-					return False
 		return True
 
-	def computeChanges(self, currTime):
-		"""Should return a list of updates
-		"""
+	def brightInterpolate(self, addr, currBright, next):
 		commands = []
-		if self.autoGradient:
-			for i in xrange(50): # Compute gradients
-				newColor = self.colors[i]
-				nextColor = self.nextColors[i]
-				newColor.setGradientTo(nextColor, self.interval)
+		firstRun = True
+		while currBright != next.bright or firstRun:
+			if next.forceBright or currBright == next.bright:
+				currBright = next.bright
+			elif currBright < next.bright:
+				currBright += 1
+			else:
+				currBright -= 1
 
-		# First check for brightness optimization
-		ignoreBrightnessGradient = False
-		if self.isConstantBrightness(self.colors) and not (self.isConstantBrightness(self.prevColors) and self.colors[0].brightEqual(self.prevColors[0])):
-			commands.append(GlobalBrightnessChange(self.colors[0]))
-			for color in self.prevColors:
-				color.bright = self.colors[0].bright
-			ignoreBrightnessGradient = True
+			outColor = copy.deepcopy(next);
+			outColor.bright = currBright
+			commands.append(ColorChange(addr, outColor))
+			firstRun = False
 
-		newColors = {}
+		return commands
+
+
+	def computeChanges(self, curr, next):
+		"""Returns a list of updates"""
+		commands = []
+
+		if self.isConstantBrightness(next) and (curr[0].bright != next[0].bright or not self.isConstantBrightness(curr)):
+			commands.extend(self.brightInterpolate(63, curr[0].bright, next[0])) #commands.append(ColorChange(63, next[0]))
+			for color in curr:
+				color.bright = next[0].bright
+
 		for i in xrange(50):
-			newColor = self.colors[i]
-			prevColor = self.prevColors[i]
+			currColor = curr[i]
+			nextColor = next[i]
 
-			if self.autoGradient and ignoreBrightnessGradient:
-				newColor.dbright = 0
-				newColor.rbright = 0
-				prevColor.dbright = 0
-				prevColor.rbright = 0
+			if nextColor != currColor:
+				commands.extend(self.brightInterpolate(i, currColor.bright, nextColor))
 
-			if newColor != prevColor:
-				if newColor in newColors:
-					newColors[newColor].append(i)
-				else:
-					newColors[newColor] = [i]
-
-		for newColor, lights in newColors.items():
-			commands.append(ColorChange(lights, newColor))
 		return commands
 
 	def colorListUpdate(self, currTime):
 		pass
 
-	def runColorListUpdate(self, currTime):
-		self.colorListUpdate(currTime)
-		for color in self.colors:
+	def runColorListUpdate(self, currTime, colors):
+		self.colorListUpdate(currTime, colors)
+		for color in colors:
 			color.normalize()
 
-	def runUpdate(self):
+	def runInterpolation(self, prev, curr, next, microTime):
+		frac = float(microTime) / self.interval
+		newCurr = []
+		for i in xrange(50):
+			c = copy.deepcopy(curr[i])
+			if curr[i].computeBrightGradient:
+				c.bright = int(prev[i].bright * (1 - frac) + next[i].bright * frac + 0.5)
+
+			if curr[i].computeColorGradient:
+				c.r = int(prev[i].r * (1 - frac) + next[i].r * frac + 0.5)
+				c.g = int(prev[i].g * (1 - frac) + next[i].g * frac + 0.5)
+				c.b = int(prev[i].b * (1 - frac) + next[i].b * frac + 0.5)
+
+			newCurr.append(c)
+
+		updates = self.computeChanges(curr, newCurr)
+		curr[:] = newCurr
+		return updates
+
+
+	def initLights(self):
 		self.interface.sendClear(False)
 		self.interface.drainBytes()
-		self.sendChangesForTime([ColorChange(list(xrange(50)), LightColor(0xcc, 0, 0, 0, True))], 0) # Turn everything off
+		self.clearTime(0)
+		self.sendChangesForTime([ColorChange(i, LightColor(0xcc, 0, 0, 0, True)) for i in xrange(50)], 0) # Turn everything off
 		time.sleep(1) # Make sure everything is set
-		self.setCurrentTime(0, 0)
+
+	def waitForRealTime(self):
+		pass
+
+	def runUpdate(self):
+		self.initLights()
 		currTime = 0
+		resetTime = 0
 		while True:
-			self.prevColors = copy.deepcopy(self.colors)
-			if self.autoGradient:
-				if self.nextColors is None:
-					self.runColorListUpdate(currTime)
-					self.nextColors = self.colors
-
-				tempColors = copy.deepcopy(self.nextColors)
-				self.colors = self.nextColors
-				self.runColorListUpdate(self.getNextTime(currTime))
-				self.nextColors = self.colors
-				self.colors = tempColors
+			nextColors = copy.deepcopy(self.colors)
+			if self.microInterval == 0:
+				self.runColorListUpdate(currTime, nextColors)
 			else:
-				self.runColorListUpdate(currTime)
+				self.runColorListUpdate(self.getNextTime(currTime), nextColors)
 
-			changeList = self.computeChanges(currTime)
-			if len(changeList) > 0:
-				status = self.sendChangesForTime(changeList, currTime)
+			if resetTime is not None:
+				if self.syncTime:
+					self.waitForRealTime() # Allows blocking
+					status = self.interface.sendClear()
+					if status == 0:
+						status = self.clearTime(0)
+				else:
+					status = self.clearTime(resetTime)
+					if status < 0:
+						print("Failure!")
+						return status
+				resetTime = None
+
+			if self.microInterval != 0:
+				microTemp = copy.deepcopy(self.colors)
+				microTime = 0
+				while microTime < self.interval:
+					updates = self.runInterpolation(self.colors, microTemp, nextColors, microTime)
+					status = self.sendChangesForTime(updates, currTime + microTime)
+					if status < 0:
+						print("Failure!")
+						return status
+
+					microTime += self.microInterval
+				updates = self.computeChanges(microTemp, nextColors) # Make sure everything is up to date (even if no gradient)
+				status = self.sendChangesForTime(updates, currTime + self.interval)
+				if status < 0:
+					print("Failure!")
+					return status
+				self.colors = microTemp
+
+			else:
+				updates = self.computeChanges(self.colors, nextColors)
+				status = self.sendChangesForTime(updates, currTime)
 				if status < 0:
 					print("Failure!")
 					return status
 
-			currTime += self.interval
-			if currTime >= self.period:
-				status = self.setCurrentTime(0, currTime)
-				currTime = 0
-				if status < 0:
-					print("Failure!")
-					return status
+			self.colors = nextColors
+			newTime = self.getNextTime(currTime)
+			if newTime == 0:
+				resetTime = currTime + self.interval
+
+			currTime = newTime
 
 	def getNextTime(self, currTime):
 		currTime += self.interval
@@ -288,8 +224,11 @@ class AbstractLightController(object):
 		return currTime
 
 	def sendChangesForTime(self, changeList, currTime):
-		return self.interface.sendAtTime(changeList, int(currTime * 100))
+		for change in changeList:
+			status = self.interface.sendMessage(change, int(currTime * 100))
+			if status != 0:
+				return status
+		return 0
 
-	def setCurrentTime(self, currentTime, atTime):
-		commands = [TimeMessage(currentTime)]
-		return self.interface.sendAtTime(commands, int(atTime * 100))
+	def clearTime(self, currTime):
+		return self.interface.sendMessage(TimeMessage(), int(currTime * 100))
