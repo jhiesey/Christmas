@@ -69,15 +69,12 @@ class TimeMessage(object):
 		self.type = 'cleartime'
 
 class AbstractLightController(object):
-	def __init__(self, port, period, interval, microInterval=0, syncTime=False):
+	def __init__(self, port, period, interval=1, microInterval=0, syncTime=False):
 		self.interface = interfaceProtocol.SerialInterface(port)
 		self.period = period # Repetition period
 		self.interval = interval # Sample interval
 		self.microInterval = microInterval # For interpolation
 		self.syncTime = syncTime
-		self.colors = [LightColor(0xcc, 0, 0, 0) for i in xrange(50)]
-		self.prevColors = None
-		self.nextColors = None
 
 	def isConstantBrightness(self, colorList):
 		for i in xrange(1, 50):
@@ -163,10 +160,14 @@ class AbstractLightController(object):
 
 	def runUpdate(self):
 		self.initLights()
+		currColors = [LightColor(0xcc, 0, 0, 0) for i in xrange(50)]
 		currTime = 0
 		resetTime = 0
 		while True:
-			nextColors = copy.deepcopy(self.colors)
+			if self.syncTime and (resetTime is not None):
+				self.waitForRealTime() # Allows blocking
+
+			nextColors = copy.deepcopy(currColors)
 			if self.microInterval == 0:
 				self.runColorListUpdate(currTime, nextColors)
 			else:
@@ -174,10 +175,12 @@ class AbstractLightController(object):
 
 			if resetTime is not None:
 				if self.syncTime:
-					self.waitForRealTime() # Allows blocking
 					status = self.interface.sendClear()
 					if status == 0:
 						status = self.clearTime(0)
+					if status < 0:
+						print("Failure!")
+						return status
 				else:
 					status = self.clearTime(resetTime)
 					if status < 0:
@@ -186,10 +189,10 @@ class AbstractLightController(object):
 				resetTime = None
 
 			if self.microInterval != 0:
-				microTemp = copy.deepcopy(self.colors)
+				microTemp = copy.deepcopy(currColors)
 				microTime = 0
 				while microTime < self.interval:
-					updates = self.runInterpolation(self.colors, microTemp, nextColors, microTime)
+					updates = self.runInterpolation(currColors, microTemp, nextColors, microTime)
 					status = self.sendChangesForTime(updates, currTime + microTime)
 					if status < 0:
 						print("Failure!")
@@ -201,16 +204,16 @@ class AbstractLightController(object):
 				if status < 0:
 					print("Failure!")
 					return status
-				self.colors = microTemp
+				currColors = microTemp
 
 			else:
-				updates = self.computeChanges(self.colors, nextColors)
+				updates = self.computeChanges(currColors, nextColors)
 				status = self.sendChangesForTime(updates, currTime)
 				if status < 0:
 					print("Failure!")
 					return status
 
-			self.colors = nextColors
+			currColors = nextColors
 			newTime = self.getNextTime(currTime)
 			if newTime == 0:
 				resetTime = currTime + self.interval
