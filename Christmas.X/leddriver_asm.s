@@ -10,7 +10,7 @@
     .extern _outReadPtr
     .extern _outWritePtr
 
-.section .ndata, data, near
+    .section .ndata, data, near
 nextOut:    .word 1
 outState:   .word 0
 bitNum:     .word 0

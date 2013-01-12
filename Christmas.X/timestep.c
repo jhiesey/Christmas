@@ -51,7 +51,7 @@ void handleSerialUpdates() {
             tempBuffer[0] = firstByte;
             tempBuffer[1] = bufferExtract();
             tempBuffer[2] = bufferExtract();
-            if(tempBuffer[2] & 0b10000000) {
+            if(tempBuffer[2] & SMASK_SINGLE) {
                 tempBuffer[3] = bufferExtract();
                 tempBuffer[4] = bufferExtract();
                 tempBuffer[5] = bufferExtract();
