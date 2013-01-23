@@ -1,5 +1,6 @@
 #!/opt/local/bin/python2.7
 
+import string
 from abstractLightController import *
 
 class TestController(AbstractLightController):
@@ -15,14 +16,87 @@ class TestController(AbstractLightController):
 			colorTime = (int(currTime / 2) + i) % 3
 
 			if colorTime == 0:
-				color.r = 0xc
+				color.r = 0xd
 			elif colorTime == 1:
-				color.g = 0xc
+				color.g = 0xd
 			elif colorTime == 2:
-				color.b = 0xc
+				color.b = 0xd
 
 			# color.bright = (currTime % 2) * 200
 			color.bright = 0xcc
+
+class ColorTestController(AbstractLightController):
+	def __init__(self, port):
+		super(ColorTestController, self).__init__(port, 1, 1, 0, True)
+		self.color = LightColor(0xcc, 0xd, 0xd, 0xd)
+
+	def waitForRealTime(self):
+		while True:
+			inp = raw_input("Enter c v: ")
+			try:
+				args = string.split(inp)
+
+				color = args[0]
+				value = int(args[1])
+
+				print(color)
+				print(value)
+
+				if color == 'r':
+					self.color.r = value
+					break
+				elif color == 'g':
+					self.color.g = value
+					break
+				elif color == 'b':
+					self.color.b = value
+					break
+			except:
+				pass
+			print("Invalid input!")
+
+
+
+	def colorListUpdate(self, currTime, colors):
+		for i in xrange(50):
+			colors[i] = copy.deepcopy(self.color)
+
+class RainbowController(AbstractLightController):
+	def __init__(self, port):
+		super(RainbowController, self).__init__(port, 7, 1, 0.05, False)
+
+	def colorListUpdate(self, currTime, colors):
+		for i, color in enumerate(colors):
+			index = (currTime + i) % 7
+
+			if index == 0:
+				color.r = 13
+				color.g = 0
+				color.b = 0
+			elif index == 1:
+				color.r = 11
+				color.g = 1
+				color.b = 0
+			elif index == 2:
+				color.r = 13
+				color.g = 7
+				color.b = 0
+			elif index == 3:
+				color.r = 1
+				color.g = 13
+				color.b = 0
+			elif index == 4:
+				color.r = 0
+				color.g = 1
+				color.b = 13
+			elif index == 5:
+				color.r = 2
+				color.g = 0
+				color.b = 13
+			elif index == 6:
+				color.r = 8
+				color.g = 0
+				color.b = 13
 
 class ClockController(AbstractLightController):
 	def __init__(self, port):
@@ -64,7 +138,7 @@ class ClockController(AbstractLightController):
 # 	# 	commands = []
 # 	# 	brightTime = currTime / 2
 # 	# 	bright = brightTime * 50
-# 	# 	color = LightColor(bright, 0xc, 0xc, 0xc, True)
+# 	# 	color = LightColor(bright, 0xd, 0xd, 0xd, True)
 # 	# 	if currTime % 2 == 0:
 # 	# 		commands.append(GlobalBrightnessChange(color))
 
@@ -90,7 +164,7 @@ class ClockController(AbstractLightController):
 # 	# 	for color in colors:
 # 	# 		color.bright = color.bright - 1 if color.bright > 0 else 0
 
-# 	# 	colors[int(currTime * 2)].b = 0xc
+# 	# 	colors[int(currTime * 2)].b = 0xd
 # 	# 	colors[int(currTime * 2)].bright = 0xcc
 
 # 	def colorListUpdate(self, currTime):
@@ -103,11 +177,11 @@ class ClockController(AbstractLightController):
 # 			colorTime = (int(currTime) + i) % 3
 
 # 			if colorTime == 0:
-# 				color.r = 0xc
+# 				color.r = 0xd
 # 			elif colorTime == 1:
-# 				color.g = 0xc
+# 				color.g = 0xd
 # 			elif colorTime == 2:
-# 				color.b = 0xc
+# 				color.b = 0xd
 
 # 			color.bright = (currTime % 1) * 400
 
@@ -124,11 +198,11 @@ class ClockController(AbstractLightController):
 		# colors[0].b = 0
 
 		# if currTime == 0:
-		# 	colors[0].r = 0xc
+		# 	colors[0].r = 0xd
 		# elif currTime == 1:
-		# 	colors[0].g = 0xc
+		# 	colors[0].g = 0xd
 		# elif currTime == 2:
-		# 	colors[0].b = 0xc
+		# 	colors[0].b = 0xd
 
 		# for i, color in enumerate(colors):
 		# 	color.r = 0
@@ -138,11 +212,11 @@ class ClockController(AbstractLightController):
 		# 	index = (currTime + i) % 3
 
 		# 	if index == 0:
-		# 		color.r = 0xc
+		# 		color.r = 0xd
 		# 	elif index == 1:
-		# 		color.g = 0xc
+		# 		color.g = 0xd
 		# 	elif index == 2:
-		# 		color.b = 0xc
+		# 		color.b = 0xd
 
-controller = ClockController('/dev/tty.usbmodemfd13131')
+controller = RainbowController('/dev/tty.usbmodemfd131')
 controller.runUpdate()

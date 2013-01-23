@@ -23,6 +23,7 @@ class SerialInterface(object):
 				return -1
 
 	def waitForFree(self):
+		print("Buffer full")
 		while True:
 			response = self.connection.receiveBytes(1)
 			if len(response) == 0:

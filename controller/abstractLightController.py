@@ -3,7 +3,7 @@ import time
 import copy
 
 MAX_BRIGHT = 0xcc
-MAX_COLOR = 0xc * 3
+MAX_COLOR = 0xd * 3
 
 class LightColor(object):
 	def __init__(self, bright, r, g, b, forceBright=False):
