@@ -1,0 +1,16 @@
+This is my hacked christmas lights controller project.
+
+Inspiration and some technical details gotten from
+http://www.deepdarc.com/2010/11/27/hacking-christmas-lights/
+
+The basic design consists of a hardware board with a PIC24FJ64GB002
+processor that interfaces to a computer via USB using the communications
+device class (hence no drivers are needed, except on Windows). Simple
+Python scripts can be written to control the lights.
+
+The ./controller directory contains the Python code that runs on the PC
+side, including some examples of pattern controllers, most of which
+are pretty lame.
+
+The ./Christmas.X directory contains the embedded C/assembly
+code that runs on the microcontroller in a MPLAB X project.

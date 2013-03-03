@@ -1,0 +1,19 @@
+Some random notes
+
+
+Light commands:
+
+00000000 (clear buffer)
+00000001 tttttttt tttttttt (reset time to zero at time ttt...)
+100000dd tttttttt tttttttt dddddddd dddddddd dddddddd (send message ddd... to light at time ttt...)
+
+
+Good-looking colors:
+
+red: 13 0 0
+orange: 11 1 0
+yellow: 13 7 0
+green: 1 13 0
+blue: 0 1 13
+indigo: 2 0 13
+violet: 8 0 13
