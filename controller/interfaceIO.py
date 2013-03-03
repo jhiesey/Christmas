@@ -4,6 +4,7 @@ def printHex(data):
     print(' '.join( [ "%02X" % ord( x ) for x in data ] ))
 
 class InterfaceIO(object):
+    """Provides a thin wrapper around the pyserial module"""
     def __init__(self, port, timeout):
         self.ser = serial.Serial(port=port, timeout=timeout)    
     
