@@ -41,5 +41,5 @@ class ChaseController(AbstractLightController):
 #                 color.b = 0xd
 #             color.bright = 0xcc
 
-controller = ChaseController('/dev/tty.usbmodemfd1311')
+controller = ChaseController('/dev/tty.usbmodemfa2311')
 controller.runUpdate()

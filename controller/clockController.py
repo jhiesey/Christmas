@@ -37,5 +37,5 @@ class ClockController(AbstractLightController):
             val >>= 1
             colors[i + startLight].r = 0xf if on else 0
 
-controller = ClockController('/dev/tty.usbmodemfd1311')
+controller = ClockController('/dev/tty.usbmodemfa2311')
 controller.runUpdate()

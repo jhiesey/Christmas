@@ -18,5 +18,5 @@ class StrobeController(AbstractLightController):
                 color.g = 0xd
                 color.b = 0xd
 
-controller = StrobeController('/dev/tty.usbmodemfd1311')
+controller = StrobeController('/dev/tty.usbmodemfa2311')
 controller.runUpdate()

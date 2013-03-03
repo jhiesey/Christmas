@@ -1,0 +1,3 @@
+This directory contains some example pattern classes as well as the lightlib
+directory, which contains the library code. Hopefully the basic setup will
+be clear enough from the examples and the comments in the lightlib code.

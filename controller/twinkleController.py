@@ -36,5 +36,5 @@ class TwinkleController(AbstractLightController):
             
         
 
-controller = TwinkleController('/dev/tty.usbmodemfd1311')
+controller = TwinkleController('/dev/tty.usbmodemfa2311')
 controller.runUpdate()

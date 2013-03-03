@@ -73,5 +73,5 @@ class HalfRainbowController(AbstractLightController):
                 color.g = 0
                 color.b = 13
 
-controller = RainbowController('/dev/tty.usbmodemfd1311')
+controller = RainbowController('/dev/tty.usbmodemfa2311')
 controller.runUpdate()
