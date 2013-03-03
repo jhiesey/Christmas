@@ -2,7 +2,7 @@
 
 import string
 import random
-from abstractLightController import *
+from lightlib.abstractLightController import *
 
 class WhiteController(AbstractLightController):
     def __init__(self, port):
