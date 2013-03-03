@@ -3,6 +3,7 @@
 import string
 import random
 from lightlib.abstractLightController import *
+import lightlib.lightColor
 
 class TestController(AbstractLightController):
     def __init__(self, port):
