@@ -1,5 +1,5 @@
-import interfaceIO
-import lightColor
+from lightlib import interfaceIO
+from lightlib import lightColor
 import struct
 
 class LightError(Exception):

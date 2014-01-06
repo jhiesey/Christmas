@@ -7,12 +7,12 @@ from lightlib.abstractLightController import *
 class RainbowController(AbstractLightController):
     def __init__(self, port):
         # super(RainbowController, self).__init__(port, 0.35, 0.05, 0, False)
-        super(RainbowController, self).__init__(port, 7, 1, 0.05, False)
+        super(RainbowController, self).__init__(port, 7, 0.25, 0.05, False)
 
     def colorListUpdate(self, currTime, colors):
         for i, color in enumerate(colors):
             # index = (currTime * 20 + i) % 7
-            index = (currTime + i) % 7
+            index = (currTime * 4 + i) % 7
             #index = currTime % 7
             # index = random.randrange(7)
 
@@ -49,12 +49,12 @@ class RainbowController(AbstractLightController):
 class HalfRainbowController(AbstractLightController):
     def __init__(self, port):
         #super(RainbowController, self).__init__(port, 0.35, 0.05, 0, False)
-        super(HalfRainbowController, self).__init__(port, 4, 1, 0.05, False)
+        super(HalfRainbowController, self).__init__(port, 4, 0.25, 0.05, False)
 
     def colorListUpdate(self, currTime, colors):
         for i, color in enumerate(colors):
             #index = (currTime * 20 + i) % 7
-            index = (currTime + i) % 4
+            index = (currTime * 4 + i) % 4
 
             if index == 0:
                 color.r = 1
@@ -73,5 +73,5 @@ class HalfRainbowController(AbstractLightController):
                 color.g = 0
                 color.b = 13
 
-controller = RainbowController('/dev/tty.usbmodemfa2311')
+controller = RainbowController('/dev/tty.usbmodem1451')
 controller.runUpdate()

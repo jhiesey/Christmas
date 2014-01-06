@@ -1,5 +1,5 @@
-import interfaceProtocol
-import lightColor
+from lightlib import interfaceProtocol
+from lightlib import lightColor
 import time
 import copy
 

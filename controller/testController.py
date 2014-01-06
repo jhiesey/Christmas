@@ -54,5 +54,5 @@ class ColorTestController(AbstractLightController):
             colors[i] = copy.deepcopy(self.color)
 
 
-controller = TestController('/dev/tty.usbmodemfa2311')
+controller = TestController('/dev/tty.usbmodem14511')
 controller.runUpdate()
