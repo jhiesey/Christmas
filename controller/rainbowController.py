@@ -1,4 +1,4 @@
-#!/opt/local/bin/python2.7
+#!/usr/bin/env python
 
 import string
 import random
@@ -73,5 +73,5 @@ class HalfRainbowController(AbstractLightController):
                 color.g = 0
                 color.b = 13
 
-controller = RainbowController('/dev/tty.usbmodem1451')
+controller = RainbowController('/dev/tty.usbmodem1411')
 controller.runUpdate()

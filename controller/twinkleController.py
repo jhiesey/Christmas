@@ -1,4 +1,4 @@
-#!/opt/local/bin/python2.7
+#!/usr/bin/env python
 
 import string
 import random
@@ -36,5 +36,5 @@ class TwinkleController(AbstractLightController):
             
         
 
-controller = TwinkleController('/dev/tty.usbmodem14511')
+controller = TwinkleController('/dev/tty.usbmodem1411')
 controller.runUpdate()

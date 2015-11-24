@@ -1,4 +1,4 @@
-#!/opt/local/bin/python2.7
+#!/usr/bin/env python
 
 import string
 import random
@@ -37,5 +37,5 @@ class ClockController(AbstractLightController):
             val >>= 1
             colors[i + startLight].r = 0xf if on else 0
 
-controller = ClockController('/dev/tty.usbmodemfa2311')
+controller = ClockController('/dev/tty.usbmodem1411')
 controller.runUpdate()

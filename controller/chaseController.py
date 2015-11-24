@@ -1,4 +1,4 @@
-#!/opt/local/bin/python2.7
+#!/usr/bin/env python
 
 import string
 import random
@@ -41,5 +41,5 @@ class ChaseController(AbstractLightController):
 #                 color.b = 0xd
 #             color.bright = 0xcc
 
-controller = ChaseController('/dev/tty.usbmodem14511')
+controller = ChaseController('/dev/tty.usbmodem1411')
 controller.runUpdate()

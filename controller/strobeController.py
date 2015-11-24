@@ -1,4 +1,4 @@
-#!/opt/local/bin/python2.7
+#!/usr/bin/env python
 
 import string
 import random
@@ -18,5 +18,5 @@ class StrobeController(AbstractLightController):
                 color.g = 0xd
                 color.b = 0xd
 
-controller = StrobeController('/dev/tty.usbmodem14511')
+controller = StrobeController('/dev/tty.usbmodem1411')
 controller.runUpdate()

@@ -1,4 +1,4 @@
-#!/opt/local/bin/python2.7
+#!/usr/bin/env python
 
 import string
 import random
@@ -13,5 +13,5 @@ class WhiteController(AbstractLightController):
             color.g = 0xd
             color.b = 0xd
 
-controller = WhiteController('/dev/tty.usbmodemfd131')
+controller = WhiteController('/dev/tty.usbmodem1411')
 controller.runUpdate()
