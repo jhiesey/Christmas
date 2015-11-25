@@ -26,6 +26,30 @@ MAX_BRIGHT = 0xd
 OFF_VOLUME = 2
 ON_VOLUME = 6
 
+def getColor(index):
+	if index <= 0:
+		return (13, 0, 0)
+	elif index == 1:
+		return (11, 1, 0)
+	elif index == 2:
+		return (13, 7, 0)
+	elif index == 3:
+		return (1, 13, 0)
+	elif index == 4:
+		return (0, 1, 13)
+	elif index == 5:
+		return (2, 0, 13)
+	elif index >= 6:
+		return (8, 0, 13)
+
+def interpolateColor(color, index):
+	lowIndex = math.floor(index)
+	highFraction = index % 1
+	(lowR, lowG, lowB) = getColor(lowIndex)
+	(highR, highG, highB) = getColor(lowIndex + 1)
+	color.r = highR * highFraction + lowR * (1 - highFraction)
+	color.g = highG * highFraction + lowG * (1 - highFraction)
+	color.b = highB * highFraction + lowB * (1 - highFraction)
 
 class SpectrumController(AbstractLightController):
 	def __init__(self, port):
@@ -60,43 +84,11 @@ class SpectrumController(AbstractLightController):
 		normalized = [(FIRST_BUCKET * pow(BUCKET_RATIO, i + 0.5), math.log10(total)) for (i, (total, count)) in enumerate(buckets) if count != 0]
 		self.raw_data = list(normalized)
 
-
 	def colorListUpdate(self, currTime, colors):
 		for i, color in enumerate(colors):
 			freq, amplitude = self.raw_data[i] if i < len(self.raw_data) else (0, 0)
-			index = math.floor(min(max((amplitude - OFF_VOLUME) / (ON_VOLUME - OFF_VOLUME), 0), 1) * 6)
-			# color.r = color.g = color.b = brightness
-
-			index = 6 - index
-
-			if index == 0:
-				color.r = 13
-				color.g = 0
-				color.b = 0
-			elif index == 1:
-				color.r = 11
-				color.g = 1
-				color.b = 0
-			elif index == 2:
-				color.r = 13
-				color.g = 7
-				color.b = 0
-			elif index == 3:
-				color.r = 1
-				color.g = 13
-				color.b = 0
-			elif index == 4:
-				color.r = 0
-				color.g = 1
-				color.b = 13
-			elif index == 5:
-				color.r = 2
-				color.g = 0
-				color.b = 13
-			elif index == 6:
-				color.r = 8
-				color.g = 0
-				color.b = 13
+			index = 6 - min(max((amplitude - OFF_VOLUME) / (ON_VOLUME - OFF_VOLUME), 0), 1) * 6
+			interpolateColor(color, index)
 
 controller = SpectrumController('/dev/tty.usbmodem1411')
 controller.runUpdate()
