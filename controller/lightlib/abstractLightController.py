@@ -241,7 +241,6 @@ class AbstractLightController(object):
 
 	def sendChangesForTime(self, changeList, currTime):
 		"""Sends all updates out of a list"""
-		print('update for time:', currTime)
 		for change in changeList:
 			self.interface.sendMessage(change, int(currTime * 100))
 
