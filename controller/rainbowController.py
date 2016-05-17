@@ -12,12 +12,12 @@ class RainbowController(AbstractLightController):
 
     def colorListUpdate(self, currTime, colors):
 
-        if currTime == 0:
+        if currTime % 1 == 0:
             try:
-                with f as open('brightness.txt', 'r'):
-                    self._bright = max(float(f.readline()), 1)
+                with open('brightness.txt', 'r') as f:
+                    self._bright = min(max(float(f.readline()), 0), 1)
             except Exception as e:
-                print ("Could not read brightness configuration: %s" % (e,))
+                print("Could not read brightness configuration: %s" % (e,))
 
         scaledBright = self._bright * 0xcc
 
@@ -85,5 +85,5 @@ class HalfRainbowController(AbstractLightController):
                 color.g = 0
                 color.b = 13
 
-controller = RainbowController('/dev/tty.usbmodem1411')
+controller = RainbowController('/dev/ttyACM0')
 controller.runUpdate()
