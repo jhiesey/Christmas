@@ -1,0 +1,23 @@
+{
+  "name": "light-web-ui",
+  "version": "0.0.1",
+  "description": "Control christmas light brightness",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jhiesey/Christmas.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jhiesey/Christmas/issues"
+  },
+  "homepage": "https://github.com/jhiesey/Christmas#readme",
+  "dependencies": {
+    "express": "^4.13.4",
+    "jade": "^1.11.0"
+  }
+}

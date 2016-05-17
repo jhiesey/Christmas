@@ -1,0 +1,9 @@
+extends layout
+
+block body
+  main
+    h1 Current brightness:
+    p
+      input(type='range', value='#{bright * 100}')
+  script(src='main.js')
+
