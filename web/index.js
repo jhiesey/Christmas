@@ -50,7 +50,6 @@ app.get('/', function (req, res, next) {
 })
 
 app.post('/setbright', function (req, res, next) {
-  console.log('GOT SETBRIGHT')
   var bright = req.query.bright
   if (bright === undefined) {
     return next(new Error('bright not specified'))
