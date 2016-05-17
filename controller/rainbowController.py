@@ -8,13 +8,25 @@ class RainbowController(AbstractLightController):
     def __init__(self, port):
         # super(RainbowController, self).__init__(port, 0.35, 0.05, 0, False)
         super(RainbowController, self).__init__(port, 7, 0.25, 0.05, False)
+        self._bright = 1
 
     def colorListUpdate(self, currTime, colors):
+
+        if currTime == 0:
+            try:
+                with f as open('brightness.txt', 'r'):
+                    self._bright = max(float(f.readline()), 1)
+            except Exception as e:
+                print ("Could not read brightness configuration: %s" % (e,))
+
+        scaledBright = self._bright * 0xcc
+
         for i, color in enumerate(colors):
             # index = (currTime * 20 + i) % 7
             index = (currTime * 4 + i) % 7
             #index = currTime % 7
             # index = random.randrange(7)
+            color.bright = scaledBright
 
             if index == 0:
                 color.r = 13
