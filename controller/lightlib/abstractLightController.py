@@ -71,7 +71,7 @@ class AbstractLightController(object):
 		"""Determines if all lights have the same brightness. If so, this
 		allows a significant optimization
 		"""
-		for i in xrange(1, 50):
+		for i in range(1, 50):
 			if colorList[i].bright != colorList[i - 1].bright:
 				return False
 
@@ -81,7 +81,7 @@ class AbstractLightController(object):
 		"""Returns True if an immediate brightness change to all lights is valid"""
 		changeNeeded = False
 
-		for i in xrange(50):
+		for i in range(50):
 			if not next[i].forceBright:
 				return False
 			if curr[i].bright != next[i].bright:
@@ -125,7 +125,7 @@ class AbstractLightController(object):
 			for color in curr:
 				color.bright = next[0].bright
 
-		for i in xrange(50):
+		for i in range(50):
 			currColor = curr[i]
 			nextColor = next[i]
 
@@ -149,7 +149,7 @@ class AbstractLightController(object):
 		"""
 		frac = float(microTime) / self.interval
 		newCurr = []
-		for i in xrange(50):
+		for i in range(50):
 			c = copy.deepcopy(curr[i])
 			if curr[i].computeBrightGradient:
 				c.bright = int(prev[i].bright * (1 - frac) + next[i].bright * frac + 0.5)
@@ -173,13 +173,13 @@ class AbstractLightController(object):
 		self.interface.sendClear(False)
 		self.interface.drainBytes()
 		self.clearTime(0)
-		self.sendChangesForTime([interfaceProtocol.ColorChangeMessage(i, lightColor.Color(0xcc, 0, 0, 0, True)) for i in xrange(50)], 0) # Turn everything off
+		self.sendChangesForTime([interfaceProtocol.ColorChangeMessage(i, lightColor.Color(0xcc, 0, 0, 0, True)) for i in range(50)], 0) # Turn everything off
 		time.sleep(1) # Make sure everything is set
 
 
 	def mainLoop(self):
 		"""The main loop that computes the correct values and updates the lights"""
-		currColors = [lightColor.Color(0xcc, 0, 0, 0) for i in xrange(50)]
+		currColors = [lightColor.Color(0xcc, 0, 0, 0) for i in range(50)]
 		currTime = 0
 		resetTime = 0
 		while True:

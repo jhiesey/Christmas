@@ -29,7 +29,7 @@ def on_data(in_data, frame_count, time_info, status_flags):
 	mags = numpy.absolute(transformed)
 
 	# tuple is sum, count
-	buckets = [(0, 0) for i in xrange(NUM_BUCKETS)]
+	buckets = [(0, 0) for i in range(NUM_BUCKETS)]
 	for i, mag in enumerate(mags):
 		freq = freqs[i]
 		if freq < FIRST_BUCKET:

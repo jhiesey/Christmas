@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import string
 import random
@@ -50,7 +50,7 @@ class ColorTestController(AbstractLightController):
 
 
     def colorListUpdate(self, currTime, colors):
-        for i in xrange(50):
+        for i in range(50):
             colors[i] = copy.deepcopy(self.color)
 
 

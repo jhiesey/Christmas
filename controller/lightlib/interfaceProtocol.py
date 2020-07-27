@@ -101,7 +101,7 @@ class SerialInterface(object):
 				print("Too short")
 				return -1
 
-			code = struct.unpack('!B', response[0])[0]
+			code = struct.unpack('!B', response)[0]
 			if code == 0:
 				return 0
 			if code == 0x80:
@@ -119,7 +119,7 @@ class SerialInterface(object):
 			if len(response) == 0:
 				continue
 
-			code = struct.unpack('!B', response[0])[0]
+			code = struct.unpack('!B', response)[0]
 			if code == 0x81:
 				return True
 

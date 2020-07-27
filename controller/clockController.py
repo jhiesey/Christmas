@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import string
 import random
@@ -32,7 +32,7 @@ class ClockController(AbstractLightController):
         colors.reverse()
 
     def writeBinaryAtLight(self, colors, val, startLight, numLights):
-        for i in xrange(numLights):
+        for i in range(numLights):
             on = val % 2 == 1
             val >>= 1
             colors[i + startLight].r = 0xf if on else 0

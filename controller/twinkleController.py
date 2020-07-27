@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import string
 import random
@@ -7,7 +7,7 @@ from lightlib.abstractLightController import *
 class TwinkleController(AbstractLightController):
     def __init__(self,port):
         super(TwinkleController, self).__init__(port, 60, 1, 0.05, False)
-        self.offset = [random.uniform(1, 2) for i in xrange(50)]
+        self.offset = [random.uniform(1, 2) for i in range(50)]
     def colorListUpdate(self, currTime, colors):
         for (i, color) in enumerate(colors):
             color.r = 0

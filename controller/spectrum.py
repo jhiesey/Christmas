@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import pyaudio
 import time
@@ -65,7 +65,7 @@ class SpectrumController(AbstractLightController):
 		transformed = numpy.fft.rfft(data)
 		mags = numpy.absolute(transformed)
 		# tuple is sum, count
-		buckets = [(0, 0) for i in xrange(NUM_BUCKETS)]
+		buckets = [(0, 0) for i in range(NUM_BUCKETS)]
 		for i, mag in enumerate(mags):
 			freq = freqs[i]
 			if freq < FIRST_BUCKET:
