@@ -24,9 +24,9 @@ class ColorTestController(AbstractLightController):
 
     def waitForRealTime(self):
         while True:
-            inp = raw_input("Enter c v: ")
+            inp = input("Enter c v: ")
             try:
-                args = string.split(inp)
+                args = inp.split()
 
                 color = args[0]
                 value = int(args[1])
@@ -54,5 +54,5 @@ class ColorTestController(AbstractLightController):
             colors[i] = copy.deepcopy(self.color)
 
 
-controller = TestController('/dev/tty.usbmodem1411')
+controller = ColorTestController('/dev/ttyACM0')
 controller.runUpdate()

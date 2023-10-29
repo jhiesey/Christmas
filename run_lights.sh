@@ -2,7 +2,7 @@
 
 cd /home/jhiesey/Christmas
 
-COMMAND="pypy3 /home/jhiesey/Christmas/controller/rainbowController.py"
+COMMAND="pypy3 /home/jhiesey/Christmas/controller/orangeController.py"
 pgrep -f -x "$COMMAND" > /dev/null 2>&1 || $COMMAND &
 
 WEBCOMMAND="node /home/jhiesey/Christmas/web/index.js"

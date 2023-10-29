@@ -13,5 +13,5 @@ class WhiteController(AbstractLightController):
             color.g = 0xd
             color.b = 0xd
 
-controller = WhiteController('/dev/tty.usbmodem1411')
+controller = WhiteController('/dev/ttyACM0')
 controller.runUpdate()
