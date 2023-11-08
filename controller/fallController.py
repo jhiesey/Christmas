@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
-import string
-import random
+import time
 from lightlib.abstractLightController import *
 
 class FallController(AbstractLightController):
     def __init__(self, port):
-        super(FallController, self).__init__(port, 60, 1, 0, False)
+        super(FallController, self).__init__(port, 0, 0, 0, False)
         self._bright = 0
     def colorListUpdate(self, currTime, colors):
+        time.sleep(1)
         try:
             with open('brightness.txt', 'r') as f:
                 self._bright = min(max(float(f.readline()), 0), 1)
@@ -35,3 +35,4 @@ class FallController(AbstractLightController):
 
 controller = FallController('/dev/ttyACM0')
 controller.runUpdate()
+
