@@ -31,7 +31,7 @@ class ChristmasController(AbstractLightController):
                 color.r = 13
                 color.g = 13
                 color.b = 13
-                color.bright = 150 * self._bright     
+                color.bright = 100 * self._bright
 
 controller = ChristmasController('/dev/ttyACM0')
 controller.runUpdate()
