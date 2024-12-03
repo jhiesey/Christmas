@@ -16,7 +16,7 @@ class ChristmasController(AbstractLightController):
             print("Could not read brightness configuration: %s" % (e,))
 
         for i, color in enumerate(colors):
-            c = i % 2
+            c = i % 3
             if c == 0:
                 color.r = 13
                 color.g = 0
@@ -27,6 +27,11 @@ class ChristmasController(AbstractLightController):
                 color.g = 13
                 color.b = 0
                 color.bright = 150 * self._bright
+            else:
+                color.r = 13
+                color.g = 13
+                color.b = 13
+                color.bright = 150 * self._bright     
 
 controller = ChristmasController('/dev/ttyACM0')
 controller.runUpdate()
